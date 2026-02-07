@@ -1,0 +1,62 @@
+services:
+  mysql:
+    image: mysql:8.0
+    ports:
+      - "3307:3306"
+    environment:
+      - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+      - MYSQL_DATABASE=onehalf
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: --default-authentication-plugin=mysql_native_password
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    ports:
+      - "8100:8100"
+    environment:
+      - AUTH_USERNAME=${AUTH_USERNAME:-bachelor}
+      - AUTH_PASSWORD=${AUTH_PASSWORD:-chatbot2026}
+      - JWT_SECRET=${JWT_SECRET:-dev-secret-change-in-production}
+      - AWS_REGION=ap-northeast-1
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - CORS_ORIGINS=http://localhost:3100
+    volumes:
+      - ./data:/app/data:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8100/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "3100:3100"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8100
+      - DATABASE_URL=mysql://onehalf@mysql:3306/onehalf
+    depends_on:
+      mysql:
+        condition: service_healthy
+      backend:
+        condition: service_started
+
+volumes:
+  mysql_data:
+
+# For local development without Docker
+# Run: cd backend && pip install -r requirements.txt && uvicorn app.main:app --reload
+# Run: cd frontend && npm install && npm run dev
+# MySQL: docker compose up mysql -d

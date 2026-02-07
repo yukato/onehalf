@@ -1,0 +1,576 @@
+generator client {
+  provider      = "prisma-client-js"
+  output        = "../lib/generated/prisma"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model AdminUser {
+  id                BigInt             @id @default(autoincrement())
+  email             String             @unique @db.VarChar(255)
+  username          String             @db.VarChar(255) // 表示名（ユニーク制約を外す）
+  password          String             @db.VarChar(255)
+  role              String             @default("admin") @db.VarChar(255)
+  isActive          Boolean            @default(true) @map("is_active")
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @updatedAt @map("updated_at")
+  lastLogin         DateTime?          @map("last_login")
+  sessions                AdminSession[]
+  activityLogs            UserActivityLog[]
+  arrangedMatchings       Matching[]
+  matchingFeedbacks       MatchingFeedback[]
+  matchingActivityLogs    MatchingActivityLog[]
+  interviews              Interview[]
+  interviewActivityLogs   InterviewActivityLog[]
+  createdEvaluationCriteria MatchingEvaluationCriteria[] @relation("EvaluationCriteriaCreatedBy")
+  updatedEvaluationCriteria MatchingEvaluationCriteria[] @relation("EvaluationCriteriaUpdatedBy")
+
+  @@map("admin_users")
+}
+
+model AdminSession {
+  id           String    @id @default(uuid()) @db.VarChar(255)
+  userId       BigInt    @map("user_id")
+  refreshToken String    @unique @map("refresh_token") @db.VarChar(500)
+  userAgent    String?   @map("user_agent") @db.Text
+  ipAddress    String?   @map("ip_address") @db.VarChar(255)
+  expiresAt    DateTime  @map("expires_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  user         AdminUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("admin_sessions")
+}
+
+// 会社管理
+model Company {
+  id        BigInt        @id @default(autoincrement())
+  name      String        @db.VarChar(255)
+  slug      String        @unique @db.VarChar(255)
+  isActive  Boolean       @default(true) @map("is_active")
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+  users             CompanyUser[]
+  moduleAssignments CompanyModuleAssignment[]
+
+  @@map("companies")
+}
+
+model CompanyUser {
+  id        BigInt           @id @default(autoincrement())
+  companyId BigInt           @map("company_id")
+  email     String           @db.VarChar(255)
+  username  String           @db.VarChar(255)
+  password  String           @db.VarChar(255)
+  role      String           @default("member") @db.VarChar(255)
+  isActive  Boolean          @default(true) @map("is_active")
+  createdAt DateTime         @default(now()) @map("created_at")
+  updatedAt DateTime         @updatedAt @map("updated_at")
+  lastLogin DateTime?        @map("last_login")
+  company   Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  sessions  CompanySession[]
+
+  @@unique([companyId, email])
+  @@index([companyId])
+  @@map("company_users")
+}
+
+model CompanySession {
+  id           String      @id @default(uuid()) @db.VarChar(255)
+  userId       BigInt      @map("user_id")
+  refreshToken String      @unique @map("refresh_token") @db.VarChar(500)
+  userAgent    String?     @map("user_agent") @db.Text
+  ipAddress    String?     @map("ip_address") @db.VarChar(255)
+  expiresAt    DateTime    @map("expires_at")
+  createdAt    DateTime    @default(now()) @map("created_at")
+  user         CompanyUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("company_sessions")
+}
+
+// 会社モジュール（マスタ）
+model CompanyModule {
+  id          BigInt                    @id @default(autoincrement())
+  name        String                    @db.VarChar(255)
+  slug        String                    @unique @db.VarChar(255)
+  description String?                   @db.Text
+  icon        String                    @default("document") @db.VarChar(100)
+  sortOrder   Int                       @default(0) @map("sort_order")
+  isActive    Boolean                   @default(true) @map("is_active")
+  createdAt   DateTime                  @default(now()) @map("created_at")
+  updatedAt   DateTime                  @updatedAt @map("updated_at")
+  assignments CompanyModuleAssignment[]
+
+  @@index([isActive])
+  @@index([sortOrder])
+  @@map("company_modules")
+}
+
+// 会社モジュール割り当て
+model CompanyModuleAssignment {
+  id        BigInt        @id @default(autoincrement())
+  companyId BigInt        @map("company_id")
+  moduleId  BigInt        @map("module_id")
+  isActive  Boolean       @default(true) @map("is_active")
+  config    Json?
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+  company   Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  module    CompanyModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, moduleId])
+  @@index([companyId])
+  @@index([moduleId])
+  @@map("company_module_assignments")
+}
+
+// Black向けユーザー管理
+model User {
+  id                BigInt             @id @default(autoincrement())
+  bdUserId          BigInt             @unique @map("bd_user_id")
+  lastName          String             @map("last_name") @db.VarChar(255)
+  firstName         String             @map("first_name") @db.VarChar(255)
+  gender            Int                @db.TinyInt
+  email             String             @db.VarChar(255)
+  mobileNumber      String?            @map("mobile_number") @db.VarChar(255)
+  birthday          DateTime?          @db.Date
+  occupationId      Int?               @map("occupation_id")
+  prefectureId      Int?               @map("prefecture_id")
+  currentStatus     String             @default("pending") @map("current_status") @db.VarChar(50)
+  planId            Int?               @map("plan_id")
+  planStartedAt     DateTime?          @map("plan_started_at")
+  score             Int                @default(0)
+  importedAt        DateTime           @default(now()) @map("imported_at")
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @updatedAt @map("updated_at")
+  deletedAt         DateTime?          @map("deleted_at")
+  occupation        Occupation?        @relation(fields: [occupationId], references: [id])
+  plan              Plan?              @relation(fields: [planId], references: [id])
+  prefecture        Prefecture?        @relation(fields: [prefectureId], references: [id])
+  activityLogs      UserActivityLog[]
+  userFiles         UserFile[]
+  matchingsAsMale   Matching[]         @relation("MaleUserMatchings")
+  matchingsAsFemale Matching[]         @relation("FemaleUserMatchings")
+  matchingFeedbacks    MatchingFeedback[]
+  matchingEvaluations  MatchingEvaluationCriteria[]
+  preferences          UserPreference[]
+  attributes           UserAttribute[]
+  availabilityPatterns UserAvailabilityPattern[]
+  interviews           Interview[]
+
+  @@index([bdUserId])
+  @@index([email])
+  @@index([currentStatus])
+  @@index([planId])
+  @@index([score])
+  @@index([deletedAt])
+  @@map("users")
+}
+
+// 希望条件タイプ（マスタ）
+model UserPreferenceType {
+  id           BigInt   @id @default(autoincrement())
+  name         String   @db.VarChar(100) // 表示名（例: "希望年齢"）
+  code         String   @unique @db.VarChar(50) // システムコード（例: "desired_age"）
+  fieldType    String   @map("field_type") @db.VarChar(50) // range, text, select, multiSelect
+  options      Json?    // 選択肢や設定（例: {"unit": "歳"}, ["会社員", "経営者"]）
+  targetGender Int?     @map("target_gender") @db.TinyInt // 1=男性向け, 2=女性向け, null=両方
+  sortOrder    Int      @default(0) @map("sort_order")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  preferences UserPreference[]
+
+  @@index([targetGender])
+  @@index([isActive])
+  @@index([sortOrder])
+  @@map("user_preference_types")
+}
+
+// ユーザーの希望条件
+model UserPreference {
+  id               BigInt   @id @default(autoincrement())
+  userId           BigInt   @map("user_id")
+  preferenceTypeId BigInt   @map("preference_type_id")
+  value            Json     // 値（例: {"min": 25, "max": 35}, ["会社員"], "大卒以上"）
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  user           User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  preferenceType UserPreferenceType @relation(fields: [preferenceTypeId], references: [id])
+
+  @@unique([userId, preferenceTypeId])
+  @@index([userId])
+  @@index([preferenceTypeId])
+  @@map("user_preferences")
+}
+
+// ユーザー属性タイプ（マスタ）- 希望条件に対応する自分自身の属性
+model UserAttributeType {
+  id           BigInt   @id @default(autoincrement())
+  name         String   @db.VarChar(100) // 表示名（例: "年収"）
+  code         String   @unique @db.VarChar(50) // システムコード（例: "income"）
+  fieldType    String   @map("field_type") @db.VarChar(50) // range, text, select, multiSelect
+  options      Json?    // 選択肢や設定
+  targetGender Int?     @map("target_gender") @db.TinyInt // 1=男性向け, 2=女性向け, null=両方
+  relatedPreferenceCode String? @map("related_preference_code") @db.VarChar(50) // 対応する希望条件のcode
+  sortOrder    Int      @default(0) @map("sort_order")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  attributes UserAttribute[]
+
+  @@index([targetGender])
+  @@index([isActive])
+  @@index([sortOrder])
+  @@map("user_attribute_types")
+}
+
+// ユーザーの属性（自分自身のプロフィール情報）
+model UserAttribute {
+  id              BigInt   @id @default(autoincrement())
+  userId          BigInt   @map("user_id")
+  attributeTypeId BigInt   @map("attribute_type_id")
+  value           Json     // 値（例: 500, "大卒", ["旅行", "映画"]）
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  attributeType UserAttributeType @relation(fields: [attributeTypeId], references: [id])
+
+  @@unique([userId, attributeTypeId])
+  @@index([userId])
+  @@index([attributeTypeId])
+  @@map("user_attributes")
+}
+
+// ユーザーの空き時間パターン
+model UserAvailabilityPattern {
+  id        BigInt   @id @default(autoincrement())
+  userId    BigInt   @map("user_id")
+  dayType   String   @map("day_type") @db.VarChar(20) // 'weekday', 'monday', 'tuesday', ..., 'saturday', 'sunday'
+  startTime String   @map("start_time") @db.VarChar(5) // '19:00'
+  endTime   String   @map("end_time") @db.VarChar(5) // '21:00'
+  notes     String?  @db.Text // ヒアリングメモ
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([dayType])
+  @@index([isActive])
+  @@map("user_availability_patterns")
+}
+
+model UserActivityLog {
+  id          BigInt   @id @default(autoincrement())
+  userId      BigInt   @map("user_id")
+  adminUserId BigInt   @map("admin_user_id")
+  content     String   @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  adminUser AdminUser @relation(fields: [adminUserId], references: [id])
+
+  @@index([userId])
+  @@index([adminUserId])
+  @@index([createdAt])
+  @@map("user_activity_logs")
+}
+
+// ファイル実体
+model File {
+  id           BigInt   @id @default(autoincrement())
+  path         String   @db.VarChar(500) // S3 key
+  originalName String   @map("original_name") @db.VarChar(255)
+  mimeType     String   @map("mime_type") @db.VarChar(100)
+  size         BigInt // bytes
+  width        Int? // 画像の場合
+  height       Int? // 画像の場合
+  duration     Int? // 音声/動画の長さ（秒）
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  userFiles UserFile[]
+
+  @@map("files")
+}
+
+// ユーザーファイル紐付け
+model UserFile {
+  id        BigInt   @id @default(autoincrement())
+  userId    BigInt   @map("user_id")
+  fileId    BigInt   @map("file_id")
+  type      String   @db.VarChar(50) // "profile", "interview", "kyc", "date_hearing"
+  sortOrder Int      @default(0) @map("sort_order")
+  isPrimary Boolean  @default(false) @map("is_primary")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  file File @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, type])
+  @@index([fileId])
+  @@map("user_files")
+}
+
+model Prefecture {
+  id             Int             @id @default(autoincrement())
+  name           String          @unique @db.VarChar(50)
+  sortOrder      Int             @default(0) @map("sort_order")
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
+  users          User[]
+  matchingVenues MatchingVenue[]
+
+  @@map("prefectures")
+}
+
+model Occupation {
+  id        Int      @id @default(autoincrement())
+  name      String   @db.VarChar(255)
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  users     User[]
+
+  @@map("occupations")
+}
+
+model Plan {
+  id        Int      @id @default(autoincrement())
+  name      String   @db.VarChar(255)
+  code      String   @unique @db.VarChar(50)
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  users     User[]
+
+  @@map("plans")
+}
+
+// マッチング（デート）管理
+model Matching {
+  id                BigInt    @id @default(autoincrement())
+  maleUserId        BigInt    @map("male_user_id")
+  femaleUserId      BigInt    @map("female_user_id")
+  startAt           DateTime  @map("start_at")
+  endAt             DateTime  @map("end_at")
+  currentStatus     String    @default("pending") @map("current_status") @db.VarChar(255)
+  venueId           BigInt?   @map("venue_id")
+  arrangedByAdminId BigInt    @map("arranged_by_admin_id")
+  maleRating        Int?      @map("male_rating") @db.TinyInt
+  femaleRating      Int?      @map("female_rating") @db.TinyInt
+  notes             String?   @db.Text
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  maleUser           User                         @relation("MaleUserMatchings", fields: [maleUserId], references: [id])
+  femaleUser         User                         @relation("FemaleUserMatchings", fields: [femaleUserId], references: [id])
+  venue              MatchingVenue?               @relation(fields: [venueId], references: [id])
+  arrangedByAdmin    AdminUser                    @relation(fields: [arrangedByAdminId], references: [id])
+  feedbacks          MatchingFeedback[]
+  evaluationCriteria MatchingEvaluationCriteria[]
+  activityLogs       MatchingActivityLog[]
+
+  @@index([maleUserId])
+  @@index([femaleUserId])
+  @@index([startAt])
+  @@index([currentStatus])
+  @@index([venueId])
+  @@index([arrangedByAdminId])
+  @@map("matchings")
+}
+
+// レストランマスタ
+model MatchingVenue {
+  id           BigInt   @id @default(autoincrement())
+  name         String   @db.VarChar(255)
+  genre        String?  @db.VarChar(255)
+  phoneNumber  String?  @map("phone_number") @db.VarChar(255)
+  postalCode   String?  @map("postal_code") @db.VarChar(10)
+  prefectureId Int?     @map("prefecture_id")
+  city         String?  @db.VarChar(255)
+  address      String?  @db.VarChar(255)
+  googleMapUrl String?  @map("google_map_url") @db.VarChar(500)
+  url          String?  @db.VarChar(500)
+  notes        String?  @db.Text
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  prefecture Prefecture? @relation(fields: [prefectureId], references: [id])
+  matchings  Matching[]
+
+  @@index([prefectureId])
+  @@index([isActive])
+  @@map("matching_venues")
+}
+
+// マッチング評価観点マスタ
+model MatchingEvaluationCriteriaType {
+  id          BigInt   @id @default(autoincrement())
+  code        String   @unique @db.VarChar(50) // "appearance", "conversation", "manner", "meet_again"
+  name        String   @db.VarChar(100) // 表示名
+  description String?  @db.VarChar(255) // 説明
+  fieldType   String   @default("rating") @map("field_type") @db.VarChar(20) // "rating" (1-5), "choice" (選択肢), "text"
+  options     Json?    // fieldType="choice"の場合の選択肢など
+  sortOrder   Int      @default(0) @map("sort_order")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  criteria MatchingEvaluationCriteria[]
+
+  @@index([isActive])
+  @@index([sortOrder])
+  @@map("matching_evaluation_criteria_types")
+}
+
+// マッチングフィードバック履歴（感想・コメント）
+model MatchingFeedback {
+  id          BigInt   @id @default(autoincrement())
+  matchingId  BigInt   @map("matching_id")
+  userId      BigInt   @map("user_id")
+  adminUserId BigInt   @map("admin_user_id")
+  content     String   @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  matching  Matching  @relation(fields: [matchingId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id])
+  adminUser AdminUser @relation(fields: [adminUserId], references: [id])
+
+  @@index([matchingId])
+  @@index([userId])
+  @@index([adminUserId])
+  @@map("matching_feedbacks")
+}
+
+// マッチング評価観点（マッチング×ユーザー×観点で1レコード）
+model MatchingEvaluationCriteria {
+  id               BigInt   @id @default(autoincrement())
+  matchingId       BigInt   @map("matching_id")
+  userId           BigInt   @map("user_id")
+  criteriaTypeId   BigInt   @map("criteria_type_id")
+  value            String   @db.VarChar(255) // 評価値（数値も文字列で保存）
+  createdByAdminId BigInt   @map("created_by_admin_id")
+  updatedByAdminId BigInt   @map("updated_by_admin_id")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  matching       Matching                     @relation(fields: [matchingId], references: [id], onDelete: Cascade)
+  user           User                         @relation(fields: [userId], references: [id])
+  criteriaType   MatchingEvaluationCriteriaType @relation(fields: [criteriaTypeId], references: [id])
+  createdByAdmin AdminUser                    @relation("EvaluationCriteriaCreatedBy", fields: [createdByAdminId], references: [id])
+  updatedByAdmin AdminUser                    @relation("EvaluationCriteriaUpdatedBy", fields: [updatedByAdminId], references: [id])
+
+  @@unique([matchingId, userId, criteriaTypeId])
+  @@index([matchingId])
+  @@index([userId])
+  @@index([criteriaTypeId])
+  @@index([createdByAdminId])
+  @@index([updatedByAdminId])
+  @@map("matching_evaluation_criteria")
+}
+
+// マッチングアクティビティログ
+model MatchingActivityLog {
+  id          BigInt   @id @default(autoincrement())
+  matchingId  BigInt   @map("matching_id")
+  adminUserId BigInt   @map("admin_user_id")
+  type        String   @db.VarChar(50) // "comment", "status_change", "venue_change", "date_change", "rating_change", "created"
+  content     String   @db.Text
+  metadata    Json?    // 変更前後の値など
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  matching  Matching  @relation(fields: [matchingId], references: [id], onDelete: Cascade)
+  adminUser AdminUser @relation(fields: [adminUserId], references: [id])
+
+  @@index([matchingId])
+  @@index([adminUserId])
+  @@index([type])
+  @@index([createdAt])
+  @@map("matching_activity_logs")
+}
+
+// 面談種類マスタ
+model InterviewType {
+  id              BigInt   @id @default(autoincrement())
+  name            String   @db.VarChar(100) // 表示名（初回面談、定期面談など）
+  code            String   @unique @db.VarChar(50) // システムコード
+  durationMinutes Int      @default(60) @map("duration_minutes") // 標準所要時間（分）
+  targetGender    Int?     @map("target_gender") @db.TinyInt // 1=男性向け, 2=女性向け, null=両方
+  sortOrder       Int      @default(0) @map("sort_order")
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  interviews Interview[]
+
+  @@index([targetGender])
+  @@index([isActive])
+  @@index([sortOrder])
+  @@map("interview_types")
+}
+
+// 面談
+model Interview {
+  id                BigInt    @id @default(autoincrement())
+  timerexBookingId  String?   @unique @map("timerex_booking_id") @db.VarChar(255) // TimeRex予約ID
+  interviewTypeId   BigInt    @map("interview_type_id")
+  userId            BigInt?   @map("user_id") // 会員（後から紐付け可能）
+  adminUserId       BigInt    @map("admin_user_id") // 担当管理者
+  guestName         String    @map("guest_name") @db.VarChar(255) // ゲスト名（TimeRexから）
+  guestEmail        String?   @map("guest_email") @db.VarChar(255)
+  guestPhone        String?   @map("guest_phone") @db.VarChar(50)
+  scheduledAt       DateTime  @map("scheduled_at") // 予約日時
+  durationMinutes   Int       @map("duration_minutes") // 所要時間（分）
+  meetingUrl        String?   @map("meeting_url") @db.VarChar(500) // オンライン会議URL
+  currentStatus     String    @default("scheduled") @map("current_status") @db.VarChar(50) // scheduled, completed, cancelled, no_show
+  notes             String?   @db.Text // メモ
+  timerexData       Json?     @map("timerex_data") // TimeRex生データ
+  importedAt        DateTime? @map("imported_at") // インポート日時
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  interviewType InterviewType          @relation(fields: [interviewTypeId], references: [id])
+  user          User?                  @relation(fields: [userId], references: [id])
+  adminUser     AdminUser              @relation(fields: [adminUserId], references: [id])
+  activityLogs  InterviewActivityLog[]
+
+  @@index([timerexBookingId])
+  @@index([interviewTypeId])
+  @@index([userId])
+  @@index([adminUserId])
+  @@index([scheduledAt])
+  @@index([currentStatus])
+  @@map("interviews")
+}
+
+// 面談アクティビティログ
+model InterviewActivityLog {
+  id           BigInt   @id @default(autoincrement())
+  interviewId  BigInt   @map("interview_id")
+  adminUserId  BigInt   @map("admin_user_id")
+  content      String   @db.Text
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  interview Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+  adminUser AdminUser @relation(fields: [adminUserId], references: [id])
+
+  @@index([interviewId])
+  @@index([adminUserId])
+  @@index([createdAt])
+  @@map("interview_activity_logs")
+}

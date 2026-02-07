@@ -1,0 +1,26 @@
+# FastAPI
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+
+# Authentication
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+
+# RAG dependencies
+anthropic>=0.40.0
+openai>=1.0.0
+sentence-transformers>=2.2.0
+numpy>=1.24.0
+
+# Utilities
+python-dotenv>=1.0.0
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+requests>=2.31.0
+
+# AWS (S3/Athena for logging)
+boto3>=1.34.0
+
+# Error monitoring
+bugsnag>=4.6.0
+sentry-sdk[fastapi]>=2.0.0

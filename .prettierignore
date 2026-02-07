@@ -1,0 +1,33 @@
+# dependencies
+node_modules
+.pnp
+.pnp.js
+
+# builds
+dist
+build
+.next
+out
+
+# misc
+.DS_Store
+*.pem
+
+# testing
+coverage
+
+# docker
+.docker
+
+# generated
+*.log
+*.tsbuildinfo
+
+# git
+.git
+.gitignore
+
+# python
+venv
+__pycache__
+*.pyc

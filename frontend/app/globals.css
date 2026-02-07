@@ -1,0 +1,112 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  @apply bg-gray-50;
+}
+
+/* スクロールバー非表示 */
+::-webkit-scrollbar {
+  display: none;
+}
+
+* {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Markdown styling */
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4 {
+  @apply font-bold text-gray-800 mt-4 mb-2;
+}
+
+.prose h1 {
+  @apply text-lg;
+}
+
+.prose h2 {
+  @apply text-base;
+}
+
+.prose h3,
+.prose h4 {
+  @apply text-sm;
+}
+
+.prose p {
+  @apply my-3 leading-normal;
+}
+
+.prose > *:first-child {
+  @apply mt-0;
+}
+
+.prose > *:last-child {
+  @apply mb-0;
+}
+
+.prose ul,
+.prose ol {
+  @apply my-3 pl-5 space-y-1;
+}
+
+.prose li {
+  @apply my-1 leading-normal;
+}
+
+.prose li::marker {
+  @apply text-gray-400;
+}
+
+.prose a {
+  @apply text-blue-600 hover:underline;
+}
+
+.prose code {
+  @apply bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono;
+}
+
+.prose pre {
+  @apply bg-gray-100 p-3 rounded-lg my-3;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.prose blockquote {
+  @apply border-l-4 border-gray-300 pl-4 my-3 text-gray-600 bg-gray-50 py-2 rounded-r;
+}
+
+.prose strong {
+  @apply font-semibold text-gray-900;
+}
+
+.prose hr {
+  @apply my-4 border-gray-200;
+}
+
+/* セクション区切り（---など）*/
+.prose hr + p,
+.prose hr + ul,
+.prose hr + ol {
+  @apply mt-3;
+}
+
+/* 【】で囲まれたセクションタイトル */
+.section-title {
+  @apply text-base font-bold text-gray-900 block mt-4 mb-2;
+}
+
+.section-title:first-child,
+p:first-child .section-title {
+  @apply mt-0;
+}

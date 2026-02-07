@@ -1,0 +1,44 @@
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Build arguments for NEXT_PUBLIC_ environment variables
+ARG NEXT_PUBLIC_BUGSNAG_API_KEY
+ARG NEXT_PUBLIC_BASIC_AUTH_USER=bachelor
+ARG NEXT_PUBLIC_BASIC_AUTH_PASSWORD=chatbot2026
+
+# Set environment variables for build
+ENV NEXT_PUBLIC_BUGSNAG_API_KEY=${NEXT_PUBLIC_BUGSNAG_API_KEY}
+ENV NEXT_PUBLIC_BASIC_AUTH_USER=${NEXT_PUBLIC_BASIC_AUTH_USER}
+ENV NEXT_PUBLIC_BASIC_AUTH_PASSWORD=${NEXT_PUBLIC_BASIC_AUTH_PASSWORD}
+
+# Dependencies
+COPY frontend/package*.json ./
+RUN npm ci
+
+# Copy source and generate Prisma client
+COPY frontend .
+RUN npx prisma generate
+
+# Build
+RUN npm run build
+
+# Production image
+FROM node:20-alpine AS runner
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+# Copy built files
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/lib/generated/prisma ./lib/generated/prisma
+
+EXPOSE 3000
+
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+
+CMD ["node", "server.js"]

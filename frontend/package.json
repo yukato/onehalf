@@ -1,0 +1,61 @@
+{
+  "name": "bachelor-chatbot-frontend",
+  "version": "2.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --port 3100",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "format": "prettier --write 'app/**/*.{ts,tsx}' 'components/**/*.{ts,tsx}' 'lib/**/*.ts'",
+    "format:check": "prettier --check 'app/**/*.{ts,tsx}' 'components/**/*.{ts,tsx}' 'lib/**/*.ts'",
+    "db:migrate": "prisma migrate dev",
+    "db:push": "prisma db push",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:studio": "prisma studio"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.982.0",
+    "@aws-sdk/s3-request-presigner": "^3.982.0",
+    "@bugsnag/js": "^8.0.0",
+    "@bugsnag/plugin-react": "^8.0.0",
+    "@prisma/client": "^6.19.2",
+    "@sentry/nextjs": "^10.38.0",
+    "@types/uuid": "^10.0.0",
+    "bcryptjs": "^3.0.3",
+    "clsx": "^2.1.0",
+    "jose": "^6.1.3",
+    "mammoth": "^1.11.0",
+    "mysql2": "^3.16.3",
+    "next": "^14.1.0",
+    "openai": "^6.17.0",
+    "pdf-parse": "^2.4.5",
+    "prisma": "^6.19.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-easy-crop": "^5.5.6",
+    "react-markdown": "^9.0.1",
+    "remark-breaks": "^4.0.0",
+    "remark-gfm": "^4.0.1",
+    "uuid": "^13.0.0"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^20.11.0",
+    "@types/pdf-parse": "^1.1.5",
+    "@types/react": "^18.2.48",
+    "@types/react-dom": "^18.2.18",
+    "autoprefixer": "^10.4.17",
+    "dotenv": "^17.2.3",
+    "eslint": "^8.56.0",
+    "eslint-config-next": "^14.1.0",
+    "postcss": "^8.4.33",
+    "prettier": "^3.2.0",
+    "tailwindcss": "^3.4.1",
+    "tsx": "^4.21.0",
+    "typescript": "^5.3.3"
+  }
+}

@@ -1,0 +1,57 @@
+# Python
+venv/
+__pycache__/
+*.egg-info/
+
+# Node.js
+node_modules/
+frontend/.next/
+frontend/out/
+
+# Python bytecode
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.eggs/
+*.egg-info/
+*.egg
+
+# Environment
+.env
+.env.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Data (contains sensitive information)
+data/
+data_backup*/
+
+# Claude Code
+.claude/
+
+# Streamlit
+.streamlit/
+
+# Docker
+*.tar
+
+# Misc
+*.bak
+*.tmp
+
+# Work logs (contain sensitive info)
+docs/work-log*.md
