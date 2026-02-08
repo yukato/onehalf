@@ -2,23 +2,15 @@
 Authentication API endpoints
 """
 
-from datetime import datetime
-from uuid import uuid4
-
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 
-from ..config import get_settings, Settings
 from ..models.schemas import LoginRequest, TokenResponse
 from ..services.auth_service import AuthService
-from ..services.chat_logger import ChatLogger, LoginLog, get_chat_logger
-from ..middleware.auth import get_auth_service, get_refresh_token_from_cookie
+from ..services.chat_logger import ChatLogger
+from ..middleware.auth import get_auth_service, get_refresh_token_from_cookie, get_chat_logger_dep
 
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
-
-
-def get_chat_logger_dep(settings: Settings = Depends(get_settings)) -> ChatLogger:
-    return get_chat_logger(settings)
 
 
 def get_client_info(request: Request) -> tuple[str, str]:
@@ -44,20 +36,17 @@ async def login(
 ):
     """Login and receive access token + refresh token cookie"""
     ip_address, user_agent = get_client_info(request)
-    timestamp = datetime.utcnow().isoformat()
 
     if not auth_service.verify_credentials(login_request.username, login_request.password):
         # ログイン失敗を記録
-        log_data: LoginLog = {
-            "event_id": str(uuid4()),
-            "timestamp": timestamp,
-            "event_type": "login_failed",
-            "username": login_request.username,
-            "ip_address": ip_address,
-            "user_agent": user_agent,
-            "success": False,
-        }
-        await chat_logger.log_login(log_data)
+        await chat_logger.log_login(
+            username=login_request.username,
+            endpoint="/api/auth/login",
+            ip_address=ip_address,
+            user_agent=user_agent,
+            success=False,
+            event_type="login_failed",
+        )
 
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -77,16 +66,14 @@ async def login(
     )
 
     # ログイン成功を記録
-    log_data: LoginLog = {
-        "event_id": str(uuid4()),
-        "timestamp": timestamp,
-        "event_type": "login",
-        "username": login_request.username,
-        "ip_address": ip_address,
-        "user_agent": user_agent,
-        "success": True,
-    }
-    await chat_logger.log_login(log_data)
+    await chat_logger.log_login(
+        username=login_request.username,
+        endpoint="/api/auth/login",
+        ip_address=ip_address,
+        user_agent=user_agent,
+        success=True,
+        event_type="login",
+    )
 
     return TokenResponse(access_token=access_token)
 
@@ -101,7 +88,6 @@ async def refresh(
     """Refresh access token using refresh token cookie"""
     refresh_token = get_refresh_token_from_cookie(request)
     ip_address, user_agent = get_client_info(request)
-    timestamp = datetime.utcnow().isoformat()
 
     if not refresh_token:
         raise HTTPException(
@@ -120,16 +106,14 @@ async def refresh(
     access_token = auth_service.create_access_token(username)
 
     # リフレッシュを記録
-    log_data: LoginLog = {
-        "event_id": str(uuid4()),
-        "timestamp": timestamp,
-        "event_type": "refresh",
-        "username": username,
-        "ip_address": ip_address,
-        "user_agent": user_agent,
-        "success": True,
-    }
-    await chat_logger.log_login(log_data)
+    await chat_logger.log_login(
+        username=username,
+        endpoint="/api/auth/refresh",
+        ip_address=ip_address,
+        user_agent=user_agent,
+        success=True,
+        event_type="refresh",
+    )
 
     return TokenResponse(access_token=access_token)
 
@@ -142,20 +126,17 @@ async def logout(
 ):
     """Logout and clear refresh token cookie"""
     ip_address, user_agent = get_client_info(request)
-    timestamp = datetime.utcnow().isoformat()
 
     response.delete_cookie("refresh_token")
 
     # ログアウトを記録
-    log_data: LoginLog = {
-        "event_id": str(uuid4()),
-        "timestamp": timestamp,
-        "event_type": "logout",
-        "username": "unknown",  # ログアウト時はトークンからユーザー名を取得できない場合がある
-        "ip_address": ip_address,
-        "user_agent": user_agent,
-        "success": True,
-    }
-    await chat_logger.log_login(log_data)
+    await chat_logger.log_login(
+        username="unknown",  # ログアウト時はトークンからユーザー名を取得できない場合がある
+        endpoint="/api/auth/logout",
+        ip_address=ip_address,
+        user_agent=user_agent,
+        success=True,
+        event_type="logout",
+    )
 
     return None

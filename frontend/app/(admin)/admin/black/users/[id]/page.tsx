@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { api } from '@/lib/api';
+import { formatActivityLogDate } from '@/lib/utils';
 import type {
   AdminUser,
   User,
@@ -753,9 +754,7 @@ export default function UserDetailPage() {
                           </div>
                           {/* 登録日時 */}
                           <span className="flex-shrink-0 text-xs text-gray-400">
-                            {new Date(userFile.createdAt)
-                              .toLocaleString('sv-SE', { timeZone: 'Asia/Tokyo' })
-                              .replace('T', ' ')}
+                            {formatActivityLogDate(userFile.createdAt)}
                           </span>
                           {/* 削除ボタン */}
                           <button
@@ -1011,9 +1010,7 @@ export default function UserDetailPage() {
                       <dt className="w-24 text-sm text-gray-500">登録日</dt>
                       <dd className="text-sm text-gray-900">
                         {user.createdAt
-                          ? new Date(user.createdAt)
-                              .toLocaleString('sv-SE', { timeZone: 'Asia/Tokyo' })
-                              .replace('T', ' ')
+                          ? formatActivityLogDate(user.createdAt)
                           : '-'}
                       </dd>
                     </div>
@@ -1276,9 +1273,7 @@ export default function UserDetailPage() {
                           {log.adminUser.username}
                         </span>
                         <span className="text-xs text-gray-500">
-                          {new Date(log.createdAt)
-                            .toLocaleString('sv-SE', { timeZone: 'Asia/Tokyo' })
-                            .replace('T', ' ')}
+                          {formatActivityLogDate(log.createdAt)}
                         </span>
                       </div>
                       <p className="text-sm text-gray-700 whitespace-pre-wrap">{log.content}</p>

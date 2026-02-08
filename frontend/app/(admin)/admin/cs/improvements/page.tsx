@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { api } from '@/lib/api';
+import { formatDateTimeJa } from '@/lib/utils';
 import type { ImprovementSuggestion, ArticleDraft, AdminUser } from '@/types';
 
 export default function ImprovementsPage() {
@@ -168,15 +169,6 @@ export default function ImprovementsPage() {
     }
   };
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('ja-JP', {
-      month: 'numeric',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
 
   if (isLoading) {
     return (
@@ -389,7 +381,7 @@ export default function ImprovementsPage() {
                   <span className="text-gray-500">
                     作成日:{' '}
                     <span className="font-medium text-gray-900">
-                      {formatDate(selectedSuggestion.created_at)}
+                      {formatDateTimeJa(selectedSuggestion.created_at)}
                     </span>
                   </span>
                 </div>

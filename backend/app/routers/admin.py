@@ -2,21 +2,17 @@
 Admin API endpoints - ログ履歴の取得など
 """
 
-from typing import Optional
+from typing import Literal, Optional
 
 from fastapi import APIRouter, Depends, Query
 
 from ..config import get_settings, Settings
-from ..middleware.auth import get_current_user
+from ..middleware.auth import get_current_user, get_chat_logger_dep
 from ..models.schemas import AdminLoginLogRequest
-from ..services.chat_logger import ChatLogger, get_chat_logger
+from ..services.chat_logger import ChatLogger
 from ..services.data_status import DataStatusService
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
-
-
-def get_chat_logger_dep(settings: Settings = Depends(get_settings)) -> ChatLogger:
-    return get_chat_logger(settings)
 
 
 async def get_logs_from_athena(
@@ -75,7 +71,7 @@ async def get_user_input_logs(
     chat_logger: ChatLogger = Depends(get_chat_logger_dep),
     days: int = Query(default=7, ge=1, le=30, description="取得する日数（1-30）"),
     hours: Optional[int] = Query(default=None, ge=1, le=24, description="取得する時間数（1-24、daysより優先）"),
-    log_type: Optional[str] = Query(default=None, description="フィルタするタイプ（faq, internal）"),
+    log_type: Optional[Literal["faq", "internal"]] = Query(default=None, description="フィルタするタイプ（faq, internal）"),
     limit: int = Query(default=100, ge=1, le=500, description="取得件数上限"),
 ):
     """ユーザー入力履歴を取得（S3/Athena）"""

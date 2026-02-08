@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { api } from '@/lib/api';
+import { formatDateTimeJa } from '@/lib/utils';
 import type { AdminUser } from '@/types';
 
 interface UserFormData {
@@ -291,7 +292,7 @@ export default function AdminUsersPage() {
                     )}
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {user.lastLogin ? new Date(user.lastLogin).toLocaleString('ja-JP') : '-'}
+                    {formatDateTimeJa(user.lastLogin ?? null)}
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap text-right">
                     <div className="flex justify-end gap-1">

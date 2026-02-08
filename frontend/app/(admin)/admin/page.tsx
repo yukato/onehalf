@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { api } from '@/lib/api';
+import { formatDateTimeJa } from '@/lib/utils';
 import type { DataStatusResponse, DataSourceStatus, AdminUser } from '@/types';
 
 const FEATURE_CARDS = [
@@ -56,22 +57,6 @@ const COLOR_CLASSES = {
   },
 };
 
-// Helper function to format date
-function formatDate(dateString: string | null): string {
-  if (!dateString) return '-';
-  try {
-    const date = new Date(dateString);
-    return date.toLocaleString('ja-JP', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  } catch {
-    return dateString;
-  }
-}
 
 // Helper function to get relative time
 function getRelativeTime(dateString: string | null): string {
@@ -193,7 +178,7 @@ export default function DashboardPage() {
           <div className="flex justify-between">
             <span>最新データ日時:</span>
             <span className={isStale ? 'text-yellow-600 font-medium' : ''}>
-              {formatDate(source.latest_item_date)}
+              {formatDateTimeJa(source.latest_item_date)}
               {source.latest_item_date && (
                 <span className="ml-1 text-gray-400">
                   ({getRelativeTime(source.latest_item_date)})
@@ -209,7 +194,7 @@ export default function DashboardPage() {
           )}
           <div className="flex justify-between">
             <span>ファイル更新:</span>
-            <span>{formatDate(source.file_updated_at)}</span>
+            <span>{formatDateTimeJa(source.file_updated_at)}</span>
           </div>
         </div>
         {source.error && <p className="mt-2 text-xs text-red-500">{source.error}</p>}

@@ -10,6 +10,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from ..config import get_settings, Settings
 from ..services.auth_service import AuthService
+from ..services.chat_logger import ChatLogger, get_chat_logger
 
 
 security = HTTPBearer(auto_error=False)
@@ -66,3 +67,8 @@ async def get_current_user(
 def get_refresh_token_from_cookie(request: Request) -> Optional[str]:
     """Extract refresh token from cookie"""
     return request.cookies.get("refresh_token")
+
+
+def get_chat_logger_dep(settings: Settings = Depends(get_settings)) -> ChatLogger:
+    """Common dependency for chat logger"""
+    return get_chat_logger(settings)

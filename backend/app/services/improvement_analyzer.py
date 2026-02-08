@@ -20,6 +20,13 @@ from .settings_manager import get_settings_manager
 
 logger = logging.getLogger(__name__)
 
+# Quality thresholds for log analysis
+LOW_QUALITY_CONFIDENCE_THRESHOLD = 0.6
+ACTION_CREATE_NEW_THRESHOLD = 0.3
+ACTION_UPDATE_EXISTING_THRESHOLD = 0.5
+ANALYSIS_LOG_LIMIT = 500
+MAX_HISTORY_ENTRIES = 1000
+
 
 class ImprovementAnalyzer:
     """Singleton service for analyzing chat logs and generating improvement suggestions"""
@@ -122,6 +129,35 @@ class ImprovementAnalyzer:
         except IOError as e:
             logger.error(f"Failed to save suggestions to local file: {e}")
 
+    @staticmethod
+    def _to_suggestion(s: dict) -> ImprovementSuggestion:
+        """Convert a suggestion dict to an ImprovementSuggestion model"""
+        created_at = s["created_at"]
+        return ImprovementSuggestion(
+            id=s["id"],
+            topic=s["topic"],
+            occurrence_count=s["occurrence_count"],
+            sample_questions=s["sample_questions"],
+            avg_confidence=s["avg_confidence"],
+            suggested_action=s["suggested_action"],
+            related_faq_ids=s.get("related_faq_ids", []),
+            created_at=datetime.fromisoformat(created_at) if isinstance(created_at, str) else created_at,
+            status=s["status"],
+        )
+
+    @staticmethod
+    def _to_draft(d: dict) -> ArticleDraft:
+        """Convert a draft dict to an ArticleDraft model"""
+        generated_at = d["generated_at"]
+        return ArticleDraft(
+            id=d["id"],
+            suggestion_id=d["suggestion_id"],
+            title=d["title"],
+            content=d["content"],
+            source_questions=d["source_questions"],
+            generated_at=datetime.fromisoformat(generated_at) if isinstance(generated_at, str) else generated_at,
+        )
+
     def _get_llm_client(self) -> LLMClient:
         """Get the current LLM client from settings manager"""
         return get_settings_manager().create_llm_client()
@@ -135,7 +171,7 @@ class ImprovementAnalyzer:
         chat_logger = get_chat_logger(self.settings)
 
         # 直近のログを取得
-        logs = await chat_logger.query_logs(days=days, log_type="faq", limit=500)
+        logs = await chat_logger.query_logs(days=days, log_type="faq", limit=ANALYSIS_LOG_LIMIT)
 
         if not logs:
             logger.info("No chat logs found for analysis")
@@ -148,7 +184,7 @@ class ImprovementAnalyzer:
             if qa:
                 confidence = qa.get("confidence_score", 1.0)
                 completeness = qa.get("information_completeness", "complete")
-                if confidence < 0.6 or completeness in ("partial", "insufficient"):
+                if confidence < LOW_QUALITY_CONFIDENCE_THRESHOLD or completeness in ("partial", "insufficient"):
                     low_quality_logs.append({
                         "query": log.get("query", ""),
                         "answer": log.get("answer", ""),
@@ -187,9 +223,9 @@ class ImprovementAnalyzer:
                 sample_questions = list(set(log["query"] for log in topic_logs[:5]))
 
                 # アクション提案を決定
-                if avg_confidence < 0.3:
+                if avg_confidence < ACTION_CREATE_NEW_THRESHOLD:
                     suggested_action = "create_new"
-                elif avg_confidence < 0.5:
+                elif avg_confidence < ACTION_UPDATE_EXISTING_THRESHOLD:
                     suggested_action = "update_existing"
                 else:
                     suggested_action = "add_examples"
@@ -218,20 +254,7 @@ class ImprovementAnalyzer:
 
         self._save_data()
 
-        return [
-            ImprovementSuggestion(
-                id=s["id"],
-                topic=s["topic"],
-                occurrence_count=s["occurrence_count"],
-                sample_questions=s["sample_questions"],
-                avg_confidence=s["avg_confidence"],
-                suggested_action=s["suggested_action"],
-                related_faq_ids=s["related_faq_ids"],
-                created_at=datetime.fromisoformat(s["created_at"]) if isinstance(s["created_at"], str) else s["created_at"],
-                status=s["status"],
-            )
-            for s in suggestions
-        ]
+        return [self._to_suggestion(s) for s in suggestions]
 
     def get_suggestions(
         self,
@@ -242,17 +265,7 @@ class ImprovementAnalyzer:
         suggestions = []
         for s in self._data["suggestions"]:
             if status is None or s.get("status") == status:
-                suggestions.append(ImprovementSuggestion(
-                    id=s["id"],
-                    topic=s["topic"],
-                    occurrence_count=s["occurrence_count"],
-                    sample_questions=s["sample_questions"],
-                    avg_confidence=s["avg_confidence"],
-                    suggested_action=s["suggested_action"],
-                    related_faq_ids=s.get("related_faq_ids", []),
-                    created_at=datetime.fromisoformat(s["created_at"]) if isinstance(s["created_at"], str) else s["created_at"],
-                    status=s["status"],
-                ))
+                suggestions.append(self._to_suggestion(s))
                 if len(suggestions) >= limit:
                     break
         return suggestions
@@ -261,17 +274,7 @@ class ImprovementAnalyzer:
         """Get a single suggestion by ID"""
         for s in self._data["suggestions"]:
             if s["id"] == suggestion_id:
-                return ImprovementSuggestion(
-                    id=s["id"],
-                    topic=s["topic"],
-                    occurrence_count=s["occurrence_count"],
-                    sample_questions=s["sample_questions"],
-                    avg_confidence=s["avg_confidence"],
-                    suggested_action=s["suggested_action"],
-                    related_faq_ids=s.get("related_faq_ids", []),
-                    created_at=datetime.fromisoformat(s["created_at"]) if isinstance(s["created_at"], str) else s["created_at"],
-                    status=s["status"],
-                )
+                return self._to_suggestion(s)
         return None
 
     def update_suggestion_status(
@@ -284,17 +287,7 @@ class ImprovementAnalyzer:
             if s["id"] == suggestion_id:
                 s["status"] = status
                 self._save_data()
-                return ImprovementSuggestion(
-                    id=s["id"],
-                    topic=s["topic"],
-                    occurrence_count=s["occurrence_count"],
-                    sample_questions=s["sample_questions"],
-                    avg_confidence=s["avg_confidence"],
-                    suggested_action=s["suggested_action"],
-                    related_faq_ids=s.get("related_faq_ids", []),
-                    created_at=datetime.fromisoformat(s["created_at"]) if isinstance(s["created_at"], str) else s["created_at"],
-                    status=s["status"],
-                )
+                return self._to_suggestion(s)
         return None
 
     def generate_article_draft(self, suggestion_id: str) -> ArticleDraft | None:
@@ -367,14 +360,7 @@ class ImprovementAnalyzer:
             self._data["drafts"].append(draft_data)
             self._save_data()
 
-            return ArticleDraft(
-                id=draft_data["id"],
-                suggestion_id=draft_data["suggestion_id"],
-                title=draft_data["title"],
-                content=draft_data["content"],
-                source_questions=draft_data["source_questions"],
-                generated_at=datetime.fromisoformat(draft_data["generated_at"]),
-            )
+            return self._to_draft(draft_data)
 
         except Exception as e:
             logger.error(f"Failed to generate article draft: {e}")
@@ -382,30 +368,13 @@ class ImprovementAnalyzer:
 
     def get_drafts(self, limit: int = 50) -> list[ArticleDraft]:
         """Get all article drafts"""
-        drafts = []
-        for d in self._data["drafts"][:limit]:
-            drafts.append(ArticleDraft(
-                id=d["id"],
-                suggestion_id=d["suggestion_id"],
-                title=d["title"],
-                content=d["content"],
-                source_questions=d["source_questions"],
-                generated_at=datetime.fromisoformat(d["generated_at"]) if isinstance(d["generated_at"], str) else d["generated_at"],
-            ))
-        return drafts
+        return [self._to_draft(d) for d in self._data["drafts"][:limit]]
 
     def get_draft(self, draft_id: str) -> ArticleDraft | None:
         """Get a single draft by ID"""
         for d in self._data["drafts"]:
             if d["id"] == draft_id:
-                return ArticleDraft(
-                    id=d["id"],
-                    suggestion_id=d["suggestion_id"],
-                    title=d["title"],
-                    content=d["content"],
-                    source_questions=d["source_questions"],
-                    generated_at=datetime.fromisoformat(d["generated_at"]) if isinstance(d["generated_at"], str) else d["generated_at"],
-                )
+                return self._to_draft(d)
         return None
 
 

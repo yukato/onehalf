@@ -4,6 +4,7 @@ RAG Chatbot Service - FAQ article search and answer generation
 
 import json
 import logging
+import re
 import numpy as np
 from pathlib import Path
 from sentence_transformers import SentenceTransformer
@@ -23,6 +24,12 @@ CATEGORY_TO_GENDER = {
     "男性会員の方": "male",
     "女性会員の方": "female",
 }
+
+# Search / scoring thresholds
+MACRO_SCORE_THRESHOLD = 0.4
+ARTICLE_BODY_MAX_CHARS = 1500
+MACRO_TEMPLATE_MAX_CHARS = 1000
+LLM_ANSWER_MAX_TOKENS = 2048
 
 
 class RAGChatbotService:
@@ -330,7 +337,7 @@ class RAGChatbotService:
                     if macro:
                         break
 
-            if macro and final_score >= 0.4:  # 閾値を適用
+            if macro and final_score >= MACRO_SCORE_THRESHOLD:
                 merged_results.append({
                     "macro": macro,
                     "score": final_score,
@@ -419,8 +426,7 @@ class RAGChatbotService:
         for rel_idx in top_relative_indices:
             original_idx = filtered_indices[rel_idx]
             score = float(similarities[rel_idx])
-            # スコアが低すぎるマクロは除外（閾値: 0.4）
-            if score >= 0.4:
+            if score >= MACRO_SCORE_THRESHOLD:
                 results.append({
                     "macro": self.macros[original_idx],
                     "score": score,
@@ -428,50 +434,44 @@ class RAGChatbotService:
 
         return results
 
-    def generate_answer(
-        self,
-        query: str,
-        context_articles: list[dict],
-        context_macros: list[dict] | None = None,
-        conversation_history: list[dict] | None = None,
-        category: str | None = None,
-    ) -> str:
-        """Generate answer using LLM with conversation history support"""
-        # 参考記事のコンテキスト
-        article_context = ""
+    @staticmethod
+    def _build_article_context(context_articles: list[dict]) -> str:
+        """Build reference article context block for system prompt."""
+        parts = []
         for i, item in enumerate(context_articles, 1):
             article = item["article"]
-            article_context += f"""
----
-【参考記事{i}】
-タイトル: {article['title']}
-URL: {article['url']}
-内容:
-{article['body_text'][:1500]}
----
-"""
+            parts.append(
+                f"---\n【参考記事{i}】\nタイトル: {article['title']}\n"
+                f"URL: {article['url']}\n内容:\n{article['body_text'][:ARTICLE_BODY_MAX_CHARS]}\n---"
+            )
+        return "\n".join(parts)
 
-        # マクロのコンテキスト（存在する場合）
-        macro_context = ""
-        if context_macros:
-            macro_context = "\n【参考マクロ（返信テンプレート）】\n"
-            for i, item in enumerate(context_macros, 1):
-                macro = item["macro"]
-                macro_context += f"""
----
-【マクロ{i}】
-タイトル: {macro['title']}
-返信テンプレート:
-{macro['comment_template'][:1000]}
----
-"""
+    @staticmethod
+    def _build_macro_context(context_macros: list[dict] | None) -> str:
+        """Build reference macro context block for system prompt."""
+        if not context_macros:
+            return ""
+        parts = ["\n【参考マクロ（返信テンプレート）】"]
+        for i, item in enumerate(context_macros, 1):
+            macro = item["macro"]
+            parts.append(
+                f"---\n【マクロ{i}】\nタイトル: {macro['title']}\n"
+                f"返信テンプレート:\n{macro['comment_template'][:MACRO_TEMPLATE_MAX_CHARS]}\n---"
+            )
+        return "\n".join(parts)
 
-        # 動的に管理される追加運用ルールを取得（カテゴリに応じてフィルタリング）
+    def _build_system_prompt(
+        self,
+        article_context: str,
+        macro_context: str,
+        category: str | None,
+    ) -> str:
+        """Build the full system prompt for answer generation."""
         rules_manager = get_rules_manager(self.settings)
         gender = CATEGORY_TO_GENDER.get(category) if category else None
         dynamic_rules = rules_manager.get_rules_for_prompt(gender=gender)
 
-        system_prompt = f"""あなたはバチェラーデートのカスタマーサポートアシスタントです。
+        return f"""あなたはバチェラーデートのカスタマーサポートアシスタントです。
 お客様に寄り添った、温かみのある対応を心がけてください。
 
 【最重要：用語の統一ルール】
@@ -529,17 +529,27 @@ URL: {article['url']}
 {article_context}
 {macro_context}"""
 
+    def generate_answer(
+        self,
+        query: str,
+        context_articles: list[dict],
+        context_macros: list[dict] | None = None,
+        conversation_history: list[dict] | None = None,
+        category: str | None = None,
+    ) -> str:
+        """Generate answer using LLM with conversation history support"""
+        article_context = self._build_article_context(context_articles)
+        macro_context = self._build_macro_context(context_macros)
+        system_prompt = self._build_system_prompt(article_context, macro_context, category)
+
         llm_client = self._get_llm_client()
 
-        # 会話履歴がある場合はマルチターンで処理
-        if conversation_history and len(conversation_history) > 0:
-            # 現在のクエリを会話履歴に追加
+        if conversation_history:
             messages = conversation_history + [{"role": "user", "content": query}]
-            return llm_client.generate_with_history(system_prompt, messages, max_tokens=2048)
+            return llm_client.generate_with_history(system_prompt, messages, max_tokens=LLM_ANSWER_MAX_TOKENS)
         else:
-            # 会話履歴がない場合は従来通りシングルターンで処理
             prompt = system_prompt + f"\n\n【お客様からの質問】\n{query}\n\n【回答】"
-            return llm_client.generate(prompt, max_tokens=2048)
+            return llm_client.generate(prompt, max_tokens=LLM_ANSWER_MAX_TOKENS)
 
     def assess_quality(
         self,
@@ -582,7 +592,6 @@ URL: {article['url']}
         try:
             response = llm_client.generate(assessment_prompt, max_tokens=500)
             # JSONをパース
-            import re
             json_match = re.search(r'\{[\s\S]*\}', response)
             if json_match:
                 data = json.loads(json_match.group())

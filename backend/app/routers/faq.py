@@ -12,9 +12,9 @@ from fastapi import APIRouter, Depends, Request
 from ..config import get_settings, Settings
 from ..models.schemas import ChatRequest, FAQChatResponse, FAQStats
 from ..services.rag_chatbot import RAGChatbotService
-from ..services.chat_logger import ChatLogger, ChatLog, get_chat_logger
+from ..services.chat_logger import ChatLog, ChatLogger
 from ..services.settings_manager import get_settings_manager
-from ..middleware.auth import get_current_user
+from ..middleware.auth import get_current_user, get_chat_logger_dep
 
 logger = logging.getLogger(__name__)
 
@@ -25,15 +25,12 @@ def get_rag_service(settings: Settings = Depends(get_settings)) -> RAGChatbotSer
     return RAGChatbotService(settings)
 
 
-def get_chat_logger_dep(settings: Settings = Depends(get_settings)) -> ChatLogger:
-    return get_chat_logger(settings)
-
-
 @router.post("/chat", response_model=FAQChatResponse)
 async def chat(
     request: ChatRequest,
     http_request: Request,
     current_user: str = Depends(get_current_user),
+    settings: Settings = Depends(get_settings),
     rag_service: RAGChatbotService = Depends(get_rag_service),
     chat_logger: ChatLogger = Depends(get_chat_logger_dep),
 ):
@@ -41,7 +38,7 @@ async def chat(
     start_time = time.time()
     session_id = str(uuid4())
     message_id = str(uuid4())
-    timestamp = datetime.utcnow().isoformat()
+    timestamp = datetime.now(settings.tz).isoformat()
 
     # 管理者ユーザー情報をヘッダーから取得
     admin_user_id = http_request.headers.get("X-Admin-User-Id")

@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { api } from '@/lib/api';
+import { formatDateTime, toDateTimeLocal, formatDateTimeJa, formatActivityLogDate } from '@/lib/utils';
 import type {
   AdminUser,
   Matching,
@@ -48,29 +49,6 @@ function getStatusColor(status: MatchingStatusCode): string {
   }
 }
 
-// 日時フォーマット（YYYY-MM-DD (曜) HH:mm）
-function formatDateTime(dateStr: string): string {
-  const date = new Date(dateStr);
-  const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  const w = weekdays[date.getDay()];
-  const h = String(date.getHours()).padStart(2, '0');
-  const min = String(date.getMinutes()).padStart(2, '0');
-  return `${y}-${m}-${d} (${w}) ${h}:${min}`;
-}
-
-// datetime-local用フォーマット
-function toDateTimeLocal(dateStr: string): string {
-  const date = new Date(dateStr);
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  const h = String(date.getHours()).padStart(2, '0');
-  const min = String(date.getMinutes()).padStart(2, '0');
-  return `${y}-${m}-${d}T${h}:${min}`;
-}
 
 // 年齢計算
 function calculateAge(birthday: string | null | undefined): number | null {
@@ -814,13 +792,7 @@ export default function MatchingDetailPage() {
                                 {fb.adminUser.username}
                               </span>
                               <span className="text-xs text-gray-400">
-                                {new Date(fb.createdAt).toLocaleString('ja-JP', {
-                                  year: 'numeric',
-                                  month: '2-digit',
-                                  day: '2-digit',
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                })}
+                                {formatDateTimeJa(fb.createdAt)}
                               </span>
                             </div>
                             <p className="text-sm text-gray-700 whitespace-pre-wrap">
@@ -883,13 +855,7 @@ export default function MatchingDetailPage() {
                                 {fb.adminUser.username}
                               </span>
                               <span className="text-xs text-gray-400">
-                                {new Date(fb.createdAt).toLocaleString('ja-JP', {
-                                  year: 'numeric',
-                                  month: '2-digit',
-                                  day: '2-digit',
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                })}
+                                {formatDateTimeJa(fb.createdAt)}
                               </span>
                             </div>
                             <p className="text-sm text-gray-700 whitespace-pre-wrap">
@@ -1231,9 +1197,7 @@ export default function MatchingDetailPage() {
                             {log.adminUser.username}
                           </span>
                           <span className="text-xs text-gray-500">
-                            {new Date(log.createdAt)
-                              .toLocaleString('sv-SE', { timeZone: 'Asia/Tokyo' })
-                              .replace('T', ' ')}
+                            {formatActivityLogDate(log.createdAt)}
                           </span>
                         </div>
                         <p className="text-sm text-gray-700 whitespace-pre-wrap">{log.content}</p>

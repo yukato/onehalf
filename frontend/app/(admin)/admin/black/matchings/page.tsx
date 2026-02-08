@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { api } from '@/lib/api';
 import { MatchingExtractorModal } from '@/components/MatchingExtractorModal';
+import { formatDateTime } from '@/lib/utils';
 import type {
   AdminUser,
   Matching,
@@ -44,18 +45,6 @@ function getStatusColor(status: MatchingStatusCode): string {
   }
 }
 
-// 日時フォーマット（YYYY-MM-DD (曜) HH:mm）
-function formatDateTime(dateStr: string): string {
-  const date = new Date(dateStr);
-  const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  const w = weekdays[date.getDay()];
-  const h = String(date.getHours()).padStart(2, '0');
-  const min = String(date.getMinutes()).padStart(2, '0');
-  return `${y}-${m}-${d} (${w}) ${h}:${min}`;
-}
 
 // 年齢を計算
 function calculateAge(birthday: string | null | undefined): number | null {

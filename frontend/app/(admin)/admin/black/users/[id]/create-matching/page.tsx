@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { api } from '@/lib/api';
+import { formatDate } from '@/lib/utils';
 import type {
   AdminUser,
   User,
@@ -798,7 +799,7 @@ export default function CreateMatchingPage() {
                               >
                                 <div>
                                   <span className="text-gray-700">
-                                    {new Date(pm.startAt).toLocaleDateString('ja-JP')}
+                                    {formatDate(pm.startAt)}
                                   </span>
                                   {pm.venue && (
                                     <span className="text-gray-500 ml-2">{pm.venue.name}</span>

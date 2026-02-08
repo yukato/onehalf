@@ -3,10 +3,9 @@ Data Status Service - Check freshness of loaded data
 """
 
 import json
-import os
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from zoneinfo import ZoneInfo
 
 from ..config import Settings
 
@@ -16,6 +15,7 @@ class DataStatusService:
 
     def __init__(self, settings: Settings):
         self.data_base_path = Path(settings.data_base_path)
+        self._tz = settings.tz
 
     def get_data_status(self) -> dict:
         """Get status of all data sources"""
@@ -23,7 +23,7 @@ class DataStatusService:
             "articles": self._get_articles_status(),
             "tickets": self._get_tickets_status(),
             "macros": self._get_macros_status(),
-            "updated_at": datetime.utcnow().isoformat(),
+            "updated_at": datetime.now(self._tz).isoformat(),
         }
 
     def _get_articles_status(self) -> dict:
@@ -41,8 +41,8 @@ class DataStatusService:
 
         # Get file modification time
         if articles_path.exists():
-            mtime = os.path.getmtime(articles_path)
-            status["file_updated_at"] = datetime.fromtimestamp(mtime).isoformat()
+            mtime = articles_path.stat().st_mtime
+            status["file_updated_at"] = datetime.fromtimestamp(mtime, tz=self._tz).isoformat()
 
             # Load articles to get count and latest date
             try:
@@ -87,8 +87,8 @@ class DataStatusService:
 
         # Get file modification time
         if tickets_path.exists():
-            mtime = os.path.getmtime(tickets_path)
-            status["file_updated_at"] = datetime.fromtimestamp(mtime).isoformat()
+            mtime = tickets_path.stat().st_mtime
+            status["file_updated_at"] = datetime.fromtimestamp(mtime, tz=self._tz).isoformat()
 
             # Load tickets to get count and latest date
             try:
@@ -136,8 +136,8 @@ class DataStatusService:
 
         # Get file modification time
         if macros_path.exists():
-            mtime = os.path.getmtime(macros_path)
-            status["file_updated_at"] = datetime.fromtimestamp(mtime).isoformat()
+            mtime = macros_path.stat().st_mtime
+            status["file_updated_at"] = datetime.fromtimestamp(mtime, tz=self._tz).isoformat()
 
             # Load macros to get count
             try:

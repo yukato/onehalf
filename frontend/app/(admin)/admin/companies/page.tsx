@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { api } from '@/lib/api';
+import { formatDateTimeJa } from '@/lib/utils';
 import type { AdminUser, Company } from '@/types';
 
 interface CompanyWithCount extends Company {
@@ -195,7 +196,7 @@ export default function CompaniesPage() {
                     </span>
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(company.createdAt).toLocaleString('sv-SE', { timeZone: 'Asia/Tokyo' })}
+                    {formatDateTimeJa(company.createdAt)}
                   </td>
                 </tr>
               ))}

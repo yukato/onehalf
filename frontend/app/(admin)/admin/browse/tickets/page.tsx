@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { api } from '@/lib/api';
+import { formatDate } from '@/lib/utils';
 import type { TicketItem } from '@/types';
 
 export default function TicketsPage() {
@@ -71,19 +72,6 @@ export default function TicketsPage() {
     router.push('/admin/login');
   };
 
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return '-';
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleString('ja-JP', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-      });
-    } catch {
-      return dateString;
-    }
-  };
 
   if (isLoading) {
     return (

@@ -16,6 +16,8 @@ from ..models.schemas import OperationalRule, RuleHistory, RuleChange
 
 logger = logging.getLogger(__name__)
 
+MAX_HISTORY_ENTRIES = 1000
+
 
 class RulesManager:
     """Singleton service for managing operational rules"""
@@ -135,25 +137,30 @@ class RulesManager:
             "changes": {k: {"old": v.old, "new": v.new} for k, v in (changes or {}).items()},
         }
         self._data["history"].insert(0, history_entry)
-        # Keep only last 1000 history entries
-        self._data["history"] = self._data["history"][:1000]
+        self._data["history"] = self._data["history"][:MAX_HISTORY_ENTRIES]
+
+    @staticmethod
+    def _to_rule(r: dict) -> OperationalRule:
+        """Convert a rule dict to an OperationalRule model"""
+        return OperationalRule(
+            id=r["id"],
+            title=r["title"],
+            content=r["content"],
+            enabled=r.get("enabled", True),
+            order=r.get("order", 0),
+            target_gender=r.get("target_gender"),
+            created_at=datetime.fromisoformat(r["created_at"]),
+            updated_at=datetime.fromisoformat(r["updated_at"]),
+            updated_by=r.get("updated_by", "system"),
+        )
 
     def get_rules(self, include_disabled: bool = True) -> list[OperationalRule]:
         """Get all rules, optionally filtered by enabled status"""
-        rules = []
-        for r in self._data["rules"]:
-            if include_disabled or r.get("enabled", True):
-                rules.append(OperationalRule(
-                    id=r["id"],
-                    title=r["title"],
-                    content=r["content"],
-                    enabled=r.get("enabled", True),
-                    order=r.get("order", 0),
-                    target_gender=r.get("target_gender"),
-                    created_at=datetime.fromisoformat(r["created_at"]),
-                    updated_at=datetime.fromisoformat(r["updated_at"]),
-                    updated_by=r.get("updated_by", "system"),
-                ))
+        rules = [
+            self._to_rule(r)
+            for r in self._data["rules"]
+            if include_disabled or r.get("enabled", True)
+        ]
         return sorted(rules, key=lambda x: x.order)
 
     def get_enabled_rules(self) -> list[OperationalRule]:
@@ -164,17 +171,7 @@ class RulesManager:
         """Get a single rule by ID"""
         for r in self._data["rules"]:
             if r["id"] == rule_id:
-                return OperationalRule(
-                    id=r["id"],
-                    title=r["title"],
-                    content=r["content"],
-                    enabled=r.get("enabled", True),
-                    order=r.get("order", 0),
-                    target_gender=r.get("target_gender"),
-                    created_at=datetime.fromisoformat(r["created_at"]),
-                    updated_at=datetime.fromisoformat(r["updated_at"]),
-                    updated_by=r.get("updated_by", "system"),
-                )
+                return self._to_rule(r)
         return None
 
     def create_rule(
@@ -284,17 +281,7 @@ class RulesManager:
                     self._add_history(rule_id, action, username, changes)
                     self._save_data()
 
-                return OperationalRule(
-                    id=r["id"],
-                    title=r["title"],
-                    content=r["content"],
-                    enabled=r.get("enabled", True),
-                    order=r.get("order", 0),
-                    target_gender=r.get("target_gender"),
-                    created_at=datetime.fromisoformat(r["created_at"]),
-                    updated_at=datetime.fromisoformat(r["updated_at"]),
-                    updated_by=r.get("updated_by", "system"),
-                )
+                return self._to_rule(r)
 
         return None
 

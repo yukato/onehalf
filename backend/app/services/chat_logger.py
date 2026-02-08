@@ -10,6 +10,7 @@ import time
 from datetime import datetime, timedelta
 from typing import TypedDict
 from uuid import uuid4
+from zoneinfo import ZoneInfo
 
 from ..config import Settings
 
@@ -67,6 +68,8 @@ class LoginLog(TypedDict, total=False):
 class ChatLogger:
     """S3へのログ書き込みとAthenaでのクエリを提供するサービス"""
 
+    VALID_LOG_TYPES = {"faq", "internal"}
+
     def __init__(self, settings: Settings):
         self.settings = settings
         self.bucket = settings.chat_logs_bucket
@@ -121,33 +124,32 @@ class ChatLogger:
             # ログ書き込み失敗はエラーログに記録するが、メイン処理は止めない
             logger.error(f"Failed to write chat log to S3: {e}")
 
-    def _write_log_sync(self, log_data: ChatLog) -> None:
-        """同期的にS3にログを書き込み（asyncio.to_threadから呼ばれる）"""
-        now = datetime.fromisoformat(log_data["timestamp"])
-        year = now.strftime("%Y")
-        month = now.strftime("%m")
-        day = now.strftime("%d")
-        hour = now.strftime("%H")
-
-        # ユニークなファイル名を生成
+    def _build_s3_key(self, prefix: str, timestamp_iso: str) -> str:
+        """Build Hive-partitioned S3 key from timestamp."""
+        now = datetime.fromisoformat(timestamp_iso)
         timestamp_ms = int(now.timestamp() * 1000)
         unique_id = uuid4().hex[:8]
         filename = f"{timestamp_ms}-{unique_id}.jsonl"
+        return (
+            f"{prefix}/year={now.strftime('%Y')}/month={now.strftime('%m')}/"
+            f"day={now.strftime('%d')}/hour={now.strftime('%H')}/{filename}"
+        )
 
-        # S3パス: chat-logs/year=2026/month=01/day=26/hour=14/xxx.jsonl
-        # Hiveパーティション形式にすることでMSCK REPAIR TABLEでパーティション自動検出可能
-        key = f"{self.prefix}/year={year}/month={month}/day={day}/hour={hour}/{filename}"
-
-        # JSONL形式で書き込み
+    def _put_jsonl(self, key: str, log_data: dict) -> None:
+        """Write a single JSONL record to S3."""
         body = json.dumps(log_data, ensure_ascii=False) + "\n"
-
         self.s3_client.put_object(
             Bucket=self.bucket,
             Key=key,
             Body=body.encode('utf-8'),
             ContentType='application/json',
         )
-        logger.debug(f"Wrote chat log to s3://{self.bucket}/{key}")
+        logger.debug(f"Wrote log to s3://{self.bucket}/{key}")
+
+    def _write_log_sync(self, log_data: ChatLog) -> None:
+        """同期的にS3にログを書き込み（asyncio.to_threadから呼ばれる）"""
+        key = self._build_s3_key(self.prefix, log_data["timestamp"])
+        self._put_jsonl(key, log_data)
 
     async def query_logs(
         self,
@@ -172,6 +174,50 @@ class ChatLogger:
             logger.error(f"Failed to query chat logs from Athena: {e}")
             raise
 
+    @staticmethod
+    def _build_partition_clause(start_time: datetime, end_time: datetime) -> str:
+        """Build Hive partition filter clause for date range."""
+        parts = []
+        current = start_time
+        while current <= end_time:
+            parts.append(
+                f"(year = '{current.strftime('%Y')}' AND month = '{current.strftime('%m')}' AND day = '{current.strftime('%d')}')"
+            )
+            current += timedelta(days=1)
+        return " OR ".join(parts)
+
+    def _execute_with_admin_fallback(
+        self,
+        query_with_admin: str,
+        query_without_admin: str,
+        result_parser: callable,
+    ) -> list[dict]:
+        """Execute Athena query, falling back if admin columns are missing."""
+        output_location = f"s3://{self.athena_output_bucket}/athena-results/"
+        exec_kwargs = {
+            'QueryExecutionContext': {'Database': self.athena_database},
+            'ResultConfiguration': {'OutputLocation': output_location},
+            'WorkGroup': self.athena_workgroup,
+        }
+
+        try:
+            response = self.athena_client.start_query_execution(
+                QueryString=query_with_admin, **exec_kwargs
+            )
+            query_execution_id = response['QueryExecutionId']
+            self._wait_for_query(query_execution_id)
+            return result_parser(query_execution_id)
+        except Exception as e:
+            if 'COLUMN_NOT_FOUND' not in str(e):
+                raise
+            logger.info("admin columns not found, falling back to query without them")
+            response = self.athena_client.start_query_execution(
+                QueryString=query_without_admin, **exec_kwargs
+            )
+            query_execution_id = response['QueryExecutionId']
+            self._wait_for_query(query_execution_id)
+            return result_parser(query_execution_id)
+
     def _query_logs_sync(
         self,
         days: int,
@@ -180,106 +226,29 @@ class ChatLogger:
         limit: int,
     ) -> list[dict]:
         """同期的にAthenaでログをクエリ"""
-        # 時間範囲の計算
-        now = datetime.now()
-        if hours:
-            start_time = now - timedelta(hours=hours)
-        else:
-            start_time = now - timedelta(days=days)
+        if log_type and log_type not in self.VALID_LOG_TYPES:
+            raise ValueError(f"Invalid log_type: {log_type}")
 
-        # パーティションフィルタを構築（コスト最適化）
-        partition_filters = []
-        current = start_time
-        while current <= now:
-            partition_filters.append(
-                f"(year = '{current.strftime('%Y')}' AND month = '{current.strftime('%m')}' AND day = '{current.strftime('%d')}')"
-            )
-            current += timedelta(days=1)
+        now = datetime.now(self.settings.tz)
+        start_time = now - timedelta(hours=hours) if hours else now - timedelta(days=days)
 
-        partition_clause = " OR ".join(partition_filters)
+        partition_clause = self._build_partition_clause(start_time, now)
 
-        # SQLクエリ構築
-        where_clauses = [f"({partition_clause})"]
-        where_clauses.append(f"timestamp >= '{start_time.isoformat()}'")
-
+        where_clauses = [f"({partition_clause})", f"timestamp >= '{start_time.isoformat()}'"]
         if log_type:
             where_clauses.append(f"log_type = '{log_type}'")
-
         where_clause = " AND ".join(where_clauses)
 
-        output_location = f"s3://{self.athena_output_bucket}/athena-results/"
+        columns = (
+            "session_id, message_id, timestamp, endpoint, log_type, category, "
+            "username, {admin}, query, answer, duration_ms, sources_count, quality_assessment"
+        )
+        tail = f"FROM {self.athena_database}.chat_logs\nWHERE {where_clause}\nORDER BY timestamp DESC\nLIMIT {limit}"
 
-        # admin_user_id, admin_username を含むクエリを試行
-        # テーブルにカラムがない場合はフォールバック
-        query_with_admin = f"""
-        SELECT
-            session_id,
-            message_id,
-            timestamp,
-            endpoint,
-            log_type,
-            category,
-            username,
-            admin_user_id,
-            admin_username,
-            query,
-            answer,
-            duration_ms,
-            sources_count,
-            quality_assessment
-        FROM {self.athena_database}.chat_logs
-        WHERE {where_clause}
-        ORDER BY timestamp DESC
-        LIMIT {limit}
-        """
+        query_with = f"SELECT {columns.format(admin='admin_user_id, admin_username')}\n{tail}"
+        query_without = f"SELECT {columns.format(admin='NULL as admin_user_id, NULL as admin_username')}\n{tail}"
 
-        query_without_admin = f"""
-        SELECT
-            session_id,
-            message_id,
-            timestamp,
-            endpoint,
-            log_type,
-            category,
-            username,
-            NULL as admin_user_id,
-            NULL as admin_username,
-            query,
-            answer,
-            duration_ms,
-            sources_count,
-            quality_assessment
-        FROM {self.athena_database}.chat_logs
-        WHERE {where_clause}
-        ORDER BY timestamp DESC
-        LIMIT {limit}
-        """
-
-        # まず管理者カラムありで試行
-        try:
-            logger.debug(f"Executing Athena query with admin columns")
-            response = self.athena_client.start_query_execution(
-                QueryString=query_with_admin,
-                QueryExecutionContext={'Database': self.athena_database},
-                ResultConfiguration={'OutputLocation': output_location},
-                WorkGroup=self.athena_workgroup,
-            )
-            query_execution_id = response['QueryExecutionId']
-            self._wait_for_query(query_execution_id)
-            return self._get_query_results(query_execution_id)
-        except Exception as e:
-            if 'COLUMN_NOT_FOUND' in str(e):
-                logger.info("admin columns not found, falling back to query without them")
-                response = self.athena_client.start_query_execution(
-                    QueryString=query_without_admin,
-                    QueryExecutionContext={'Database': self.athena_database},
-                    ResultConfiguration={'OutputLocation': output_location},
-                    WorkGroup=self.athena_workgroup,
-                )
-                query_execution_id = response['QueryExecutionId']
-                self._wait_for_query(query_execution_id)
-                return self._get_query_results(query_execution_id)
-            raise
+        return self._execute_with_admin_fallback(query_with, query_without, self._get_query_results)
 
     def _wait_for_query(self, query_execution_id: str, max_wait_seconds: int = 60) -> None:
         """Athenaクエリの完了を待機"""
@@ -377,7 +346,7 @@ class ChatLogger:
         """S3にログインログを非同期で書き込み"""
         log_data: LoginLog = {
             "event_id": uuid4().hex,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(self.settings.tz).isoformat(),
             "event_type": event_type,
             "username": username,
             "ip_address": ip_address,
@@ -404,28 +373,8 @@ class ChatLogger:
 
     def _write_login_log_sync(self, log_data: LoginLog) -> None:
         """同期的にS3にログインログを書き込み"""
-        now = datetime.fromisoformat(log_data["timestamp"])
-        year = now.strftime("%Y")
-        month = now.strftime("%m")
-        day = now.strftime("%d")
-        hour = now.strftime("%H")
-
-        timestamp_ms = int(now.timestamp() * 1000)
-        unique_id = uuid4().hex[:8]
-        filename = f"{timestamp_ms}-{unique_id}.jsonl"
-
-        # S3パス: login-logs/year=2026/month=01/day=26/hour=14/xxx.jsonl
-        key = f"login-logs/year={year}/month={month}/day={day}/hour={hour}/{filename}"
-
-        body = json.dumps(log_data, ensure_ascii=False) + "\n"
-
-        self.s3_client.put_object(
-            Bucket=self.bucket,
-            Key=key,
-            Body=body.encode('utf-8'),
-            ContentType='application/json',
-        )
-        logger.debug(f"Wrote login log to s3://{self.bucket}/{key}")
+        key = self._build_s3_key("login-logs", log_data["timestamp"])
+        self._put_jsonl(key, log_data)
 
     async def query_login_logs(
         self,
@@ -452,92 +401,22 @@ class ChatLogger:
         limit: int,
     ) -> list[dict]:
         """同期的にAthenaでログインログをクエリ"""
-        now = datetime.now()
+        now = datetime.now(self.settings.tz)
         start_time = now - timedelta(days=days)
 
-        # パーティションフィルタを構築
-        partition_filters = []
-        current = start_time
-        while current <= now:
-            partition_filters.append(
-                f"(year = '{current.strftime('%Y')}' AND month = '{current.strftime('%m')}' AND day = '{current.strftime('%d')}')"
-            )
-            current += timedelta(days=1)
+        partition_clause = self._build_partition_clause(start_time, now)
+        where = f"({partition_clause})\n  AND timestamp >= '{start_time.isoformat()}'"
 
-        partition_clause = " OR ".join(partition_filters)
-        output_location = f"s3://{self.athena_output_bucket}/athena-results/"
+        columns = (
+            "event_id, timestamp, event_type, username, ip_address, user_agent, "
+            "success, {admin}, country, country_code, region, city, isp"
+        )
+        tail = f"FROM {self.athena_database}.login_logs\nWHERE {where}\nORDER BY timestamp DESC\nLIMIT {limit}"
 
-        query_with_admin = f"""
-        SELECT
-            event_id,
-            timestamp,
-            event_type,
-            username,
-            ip_address,
-            user_agent,
-            success,
-            admin_user_id,
-            admin_username,
-            country,
-            country_code,
-            region,
-            city,
-            isp
-        FROM {self.athena_database}.login_logs
-        WHERE ({partition_clause})
-          AND timestamp >= '{start_time.isoformat()}'
-        ORDER BY timestamp DESC
-        LIMIT {limit}
-        """
+        query_with = f"SELECT {columns.format(admin='admin_user_id, admin_username')}\n{tail}"
+        query_without = f"SELECT {columns.format(admin='NULL as admin_user_id, NULL as admin_username')}\n{tail}"
 
-        query_without_admin = f"""
-        SELECT
-            event_id,
-            timestamp,
-            event_type,
-            username,
-            ip_address,
-            user_agent,
-            success,
-            NULL as admin_user_id,
-            NULL as admin_username,
-            country,
-            country_code,
-            region,
-            city,
-            isp
-        FROM {self.athena_database}.login_logs
-        WHERE ({partition_clause})
-          AND timestamp >= '{start_time.isoformat()}'
-        ORDER BY timestamp DESC
-        LIMIT {limit}
-        """
-
-        # まず管理者カラムありで試行
-        try:
-            logger.debug("Executing Athena login query with admin columns")
-            response = self.athena_client.start_query_execution(
-                QueryString=query_with_admin,
-                QueryExecutionContext={'Database': self.athena_database},
-                ResultConfiguration={'OutputLocation': output_location},
-                WorkGroup=self.athena_workgroup,
-            )
-            query_execution_id = response['QueryExecutionId']
-            self._wait_for_query(query_execution_id)
-            return self._get_login_query_results(query_execution_id)
-        except Exception as e:
-            if 'COLUMN_NOT_FOUND' in str(e):
-                logger.info("admin columns not found in login_logs, falling back")
-                response = self.athena_client.start_query_execution(
-                    QueryString=query_without_admin,
-                    QueryExecutionContext={'Database': self.athena_database},
-                    ResultConfiguration={'OutputLocation': output_location},
-                    WorkGroup=self.athena_workgroup,
-                )
-                query_execution_id = response['QueryExecutionId']
-                self._wait_for_query(query_execution_id)
-                return self._get_login_query_results(query_execution_id)
-            raise
+        return self._execute_with_admin_fallback(query_with, query_without, self._get_login_query_results)
 
     def _get_login_query_results(self, query_execution_id: str) -> list[dict]:
         """Athenaログインクエリ結果を取得"""

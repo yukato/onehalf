@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { api } from '@/lib/api';
+import { formatActivityLogDate } from '@/lib/utils';
 import type { SettingsResponse, ModelInfo, OperationalRule, RuleHistory, AdminUser } from '@/types';
 
 type SettingsTab = 'model' | 'rules';
@@ -262,16 +263,6 @@ export default function SettingsPage() {
     }
   };
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    const seconds = String(date.getSeconds()).padStart(2, '0');
-    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-  };
 
   const getRuleActionLabel = (action: string) => {
     switch (action) {
@@ -584,7 +575,7 @@ export default function SettingsPage() {
                               </button>
                             </td>
                             <td className="px-4 py-3 text-center text-sm text-gray-500">
-                              {formatDate(rule.updated_at)}
+                              {formatActivityLogDate(rule.updated_at)}
                             </td>
                             <td className="px-4 py-3 text-center">
                               <div className="flex items-center justify-center gap-1">
@@ -685,7 +676,7 @@ export default function SettingsPage() {
                                   </span>
                                   <span className="text-gray-900 flex-1">{ruleTitle}</span>
                                   <span className="text-gray-400 text-xs">
-                                    {formatDate(item.timestamp)}
+                                    {formatActivityLogDate(item.timestamp)}
                                   </span>
                                 </li>
                               );

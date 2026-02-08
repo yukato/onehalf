@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { api } from '@/lib/api';
+import { formatActivityLogDate } from '@/lib/utils';
 import type {
   AdminUser,
   User,
@@ -761,9 +762,7 @@ export default function UsersPage() {
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
                       {user.createdAt
-                        ? new Date(user.createdAt)
-                            .toLocaleString('sv-SE', { timeZone: 'Asia/Tokyo' })
-                            .replace('T', ' ')
+                        ? formatActivityLogDate(user.createdAt)
                         : '-'}
                     </td>
                   </tr>

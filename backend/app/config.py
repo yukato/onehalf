@@ -2,11 +2,22 @@
 Application configuration using pydantic-settings
 """
 
-from pydantic_settings import BaseSettings
+from zoneinfo import ZoneInfo
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
 
 
 class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+
+    # Timezone
+    timezone: str = "Asia/Tokyo"
+
+    @property
+    def tz(self) -> ZoneInfo:
+        return ZoneInfo(self.timezone)
+
     # Basic認証
     basic_auth_user: str = "admin"
     basic_auth_password: str = "admin123"
@@ -106,9 +117,6 @@ class Settings(BaseSettings):
     athena_workgroup: str = "primary"  # Athenaワークグループ
     athena_output_bucket: str = ""  # Athena結果出力先（空の場合はchat_logs_bucketを使用）
 
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
 
 
 @lru_cache()

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { api } from '@/lib/api';
+import { formatDateTime, formatActivityLogDate } from '@/lib/utils';
 import type { AdminUser, Interview, InterviewType, InterviewActivityLog, User } from '@/types';
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
@@ -202,17 +203,6 @@ export default function InterviewDetailPage() {
     }
   };
 
-  const formatDateTime = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, '0');
-    const d = String(date.getDate()).padStart(2, '0');
-    const w = weekdays[date.getDay()];
-    const h = String(date.getHours()).padStart(2, '0');
-    const min = String(date.getMinutes()).padStart(2, '0');
-    return `${y}-${m}-${d} (${w}) ${h}:${min}`;
-  };
 
   if (isLoading) {
     return (
@@ -588,9 +578,7 @@ export default function InterviewDetailPage() {
                           {log.adminUser.username}
                         </span>
                         <span className="text-xs text-gray-500">
-                          {new Date(log.createdAt)
-                            .toLocaleString('sv-SE', { timeZone: 'Asia/Tokyo' })
-                            .replace('T', ' ')}
+                          {formatActivityLogDate(log.createdAt)}
                         </span>
                       </div>
                       <p className="text-sm text-gray-700 whitespace-pre-wrap">{log.content}</p>
