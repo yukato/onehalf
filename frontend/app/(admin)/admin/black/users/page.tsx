@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { api } from '@/lib/api';
+import { SearchBox } from '@/components/ui/SearchBox';
 import { formatActivityLogDate } from '@/lib/utils';
 import type {
   AdminUser,
@@ -200,8 +201,7 @@ export default function UsersPage() {
     }
   };
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSearch = () => {
     setOffset(0);
     loadUsers(searchQuery, 0);
   };
@@ -367,7 +367,7 @@ export default function UsersPage() {
           {/* 新規作成ボタン */}
           <button
             onClick={openCreateModal}
-            className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1.5"
+            className="px-3 py-1.5 bg-primary text-white text-sm rounded-lg hover:bg-primary-dark transition-colors flex items-center gap-1.5"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -385,21 +385,12 @@ export default function UsersPage() {
       <div className="space-y-4">
         {/* 検索・フィルタ */}
         <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
-          <form onSubmit={handleSearch} className="flex gap-2">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="名前、メール、BD User IDで検索..."
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-            />
-            <button
-              type="submit"
-              className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              検索
-            </button>
-          </form>
+          <SearchBox
+            value={searchQuery}
+            onChange={setSearchQuery}
+            onSubmit={handleSearch}
+            placeholder="名前、メール、BD User IDで検索..."
+          />
 
           {/* フィルタ */}
           <div className="flex flex-wrap gap-3">
@@ -419,7 +410,7 @@ export default function UsersPage() {
                   age: filterAge,
                 });
               }}
-              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
             >
               <option value="">性別: すべて</option>
               <option value="1">男性</option>
@@ -442,7 +433,7 @@ export default function UsersPage() {
                   age: val,
                 });
               }}
-              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
             >
               <option value="">年齢: すべて</option>
               <option value="20-24">20-24歳</option>
@@ -470,7 +461,7 @@ export default function UsersPage() {
                   age: filterAge,
                 });
               }}
-              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
             >
               <option value="">ステータス: すべて</option>
               {USER_STATUSES.map((s) => (
@@ -496,7 +487,7 @@ export default function UsersPage() {
                   age: filterAge,
                 });
               }}
-              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
             >
               <option value="">プラン: すべて</option>
               {plans.map((p) => (
@@ -522,7 +513,7 @@ export default function UsersPage() {
                   age: filterAge,
                 });
               }}
-              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
             >
               <option value="">都道府県: すべて</option>
               {prefectures.map((p) => (
@@ -548,7 +539,7 @@ export default function UsersPage() {
                   age: filterAge,
                 });
               }}
-              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
             >
               <option value="">職業: すべて</option>
               {occupations.map((o) => (
@@ -574,7 +565,7 @@ export default function UsersPage() {
                   age: filterAge,
                 });
               }}
-              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
             >
               <option value="">スコア: すべて</option>
               <option value="100">100</option>
@@ -847,7 +838,7 @@ export default function UsersPage() {
                       type="number"
                       value={formData.bdUserId}
                       onChange={(e) => setFormData({ ...formData, bdUserId: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
                       required
                     />
                   </div>
@@ -860,7 +851,7 @@ export default function UsersPage() {
                       onChange={(e) =>
                         setFormData({ ...formData, gender: parseInt(e.target.value) })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
                     >
                       <option value={1}>男性</option>
                       <option value={2}>女性</option>
@@ -877,7 +868,7 @@ export default function UsersPage() {
                       type="text"
                       value={formData.lastName}
                       onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
                       placeholder="山田"
                       required
                     />
@@ -890,7 +881,7 @@ export default function UsersPage() {
                       type="text"
                       value={formData.firstName}
                       onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
                       placeholder="太郎"
                       required
                     />
@@ -905,7 +896,7 @@ export default function UsersPage() {
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
                     required
                   />
                 </div>
@@ -917,7 +908,7 @@ export default function UsersPage() {
                       type="tel"
                       value={formData.mobileNumber || ''}
                       onChange={(e) => setFormData({ ...formData, mobileNumber: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
                     />
                   </div>
                   <div>
@@ -926,7 +917,7 @@ export default function UsersPage() {
                       type="date"
                       value={formData.birthday || ''}
                       onChange={(e) => setFormData({ ...formData, birthday: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
                     />
                   </div>
                 </div>
@@ -942,7 +933,7 @@ export default function UsersPage() {
                           occupationId: e.target.value ? parseInt(e.target.value) : undefined,
                         })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
                     >
                       <option value="">選択してください</option>
                       {occupations.map((occ) => (
@@ -962,7 +953,7 @@ export default function UsersPage() {
                           prefectureId: e.target.value ? parseInt(e.target.value) : undefined,
                         })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
                     >
                       <option value="">選択してください</option>
                       {prefectures.map((pref) => (
@@ -985,7 +976,7 @@ export default function UsersPage() {
                           planId: e.target.value ? parseInt(e.target.value) : undefined,
                         })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
                     >
                       <option value="">選択してください</option>
                       {plans.map((plan) => (
@@ -1007,7 +998,7 @@ export default function UsersPage() {
                           currentStatus: e.target.value as UserStatusCode,
                         })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
                     >
                       {USER_STATUSES.map((status) => (
                         <option key={status.code} value={status.code}>
@@ -1023,7 +1014,7 @@ export default function UsersPage() {
                   <select
                     value={formData.score ?? 100}
                     onChange={(e) => setFormData({ ...formData, score: parseInt(e.target.value) })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
                   >
                     {Array.from({ length: 101 }, (_, i) => 100 - i).map((score) => (
                       <option key={score} value={score}>
@@ -1057,7 +1048,7 @@ export default function UsersPage() {
                     !formData.firstName ||
                     !formData.email
                       ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                      : 'bg-primary text-white hover:bg-primary-dark'
                   }`}
                 >
                   {isSaving ? '保存中...' : '保存'}
@@ -1131,7 +1122,7 @@ export default function UsersPage() {
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                       !importFile || isImporting
                         ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                        : 'bg-primary text-white hover:bg-primary-dark'
                     }`}
                   >
                     {isImporting ? 'インポート中...' : 'インポート'}
@@ -1169,7 +1160,7 @@ export default function UsersPage() {
                 <div className="flex justify-end">
                   <button
                     onClick={closeImportModal}
-                    className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700"
+                    className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark"
                   >
                     閉じる
                   </button>

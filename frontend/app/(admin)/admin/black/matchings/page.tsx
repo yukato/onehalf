@@ -448,7 +448,7 @@ export default function MatchingsPage() {
 
           <button
             onClick={openCreateModal}
-            className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1.5"
+            className="px-3 py-1.5 bg-primary text-white text-sm rounded-lg hover:bg-primary-dark transition-colors flex items-center gap-1.5"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -489,7 +489,7 @@ export default function MatchingsPage() {
                     }
                   }}
                   placeholder="名前で検索..."
-                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-40"
+                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary w-40"
                 />
               </div>
 
@@ -510,7 +510,7 @@ export default function MatchingsPage() {
                       0
                     );
                   }}
-                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
                 >
                   <option value="">すべて</option>
                   {MATCHING_STATUSES.map((s) => (
@@ -539,7 +539,7 @@ export default function MatchingsPage() {
                       0
                     );
                   }}
-                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
                 />
               </div>
 
@@ -561,7 +561,7 @@ export default function MatchingsPage() {
                       0
                     );
                   }}
-                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
                 />
               </div>
 
@@ -1106,7 +1106,7 @@ export default function MatchingsPage() {
                           setMaleSearch(e.target.value);
                           searchMaleUsers(e.target.value);
                         }}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
                         placeholder="名前またはIDで検索..."
                       />
                       {maleUsers.length > 0 && (
@@ -1180,7 +1180,7 @@ export default function MatchingsPage() {
                           setFemaleSearch(e.target.value);
                           searchFemaleUsers(e.target.value);
                         }}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
                         placeholder="名前またはIDで検索..."
                       />
                       {femaleUsers.length > 0 && (
@@ -1218,7 +1218,7 @@ export default function MatchingsPage() {
                       type="datetime-local"
                       value={formData.startAt}
                       onChange={(e) => setFormData({ ...formData, startAt: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
                       required
                     />
                   </div>
@@ -1230,7 +1230,7 @@ export default function MatchingsPage() {
                       type="datetime-local"
                       value={formData.endAt}
                       onChange={(e) => setFormData({ ...formData, endAt: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
                       required
                     />
                   </div>
@@ -1242,7 +1242,7 @@ export default function MatchingsPage() {
                   <select
                     value={formData.venueId || ''}
                     onChange={(e) => setFormData({ ...formData, venueId: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
                   >
                     <option value="">未設定</option>
                     {venues.map((venue) => (
@@ -1260,7 +1260,7 @@ export default function MatchingsPage() {
                   <textarea
                     value={formData.notes || ''}
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
                     rows={3}
                     placeholder="特記事項など"
                   />
@@ -1290,7 +1290,7 @@ export default function MatchingsPage() {
                     !formData.startAt ||
                     !formData.endAt
                       ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                      : 'bg-primary text-white hover:bg-primary-dark'
                   }`}
                 >
                   {isSaving ? '作成中...' : '作成'}

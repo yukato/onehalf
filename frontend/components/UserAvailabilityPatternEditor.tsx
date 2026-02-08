@@ -181,7 +181,7 @@ export function UserAvailabilityPatternEditor({ userId }: UserAvailabilityPatter
           <select
             value={data.dayType}
             onChange={(e) => onChange({ ...data, dayType: e.target.value as DayType })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
           >
             {DAY_TYPE_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -197,7 +197,7 @@ export function UserAvailabilityPatternEditor({ userId }: UserAvailabilityPatter
           <select
             value={data.startTime}
             onChange={(e) => onChange({ ...data, startTime: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
           >
             {TIME_OPTIONS.map((time) => (
               <option key={time} value={time}>
@@ -213,7 +213,7 @@ export function UserAvailabilityPatternEditor({ userId }: UserAvailabilityPatter
           <select
             value={data.endTime}
             onChange={(e) => onChange({ ...data, endTime: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
           >
             {TIME_OPTIONS.map((time) => (
               <option key={time} value={time}>
@@ -232,7 +232,7 @@ export function UserAvailabilityPatternEditor({ userId }: UserAvailabilityPatter
           value={data.notes}
           onChange={(e) => onChange({ ...data, notes: e.target.value })}
           placeholder="例: 定時上がりの日のみ"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
         />
       </div>
 
@@ -243,7 +243,7 @@ export function UserAvailabilityPatternEditor({ userId }: UserAvailabilityPatter
           id={`active-${isNew ? 'new' : editingId}`}
           checked={data.isActive}
           onChange={(e) => onChange({ ...data, isActive: e.target.checked })}
-          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+          className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary/50"
         />
         <label htmlFor={`active-${isNew ? 'new' : editingId}`} className="text-sm text-gray-700">
           有効
@@ -264,7 +264,7 @@ export function UserAvailabilityPatternEditor({ userId }: UserAvailabilityPatter
           type="button"
           onClick={() => (isNew ? handleAdd() : handleSaveEdit())}
           disabled={isSubmitting}
-          className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark disabled:opacity-50"
         >
           {isSubmitting ? '保存中...' : '保存'}
         </button>
@@ -290,7 +290,7 @@ export function UserAvailabilityPatternEditor({ userId }: UserAvailabilityPatter
         {!isAdding && (
           <button
             onClick={() => setIsAdding(true)}
-            className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1.5"
+            className="px-3 py-1.5 bg-primary text-white text-sm rounded-lg hover:bg-primary-dark transition-colors flex items-center gap-1.5"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -339,7 +339,7 @@ export function UserAvailabilityPatternEditor({ userId }: UserAvailabilityPatter
                         onClick={() => handleToggleActive(pattern)}
                         disabled={isSubmitting}
                         className={`w-10 h-6 rounded-full transition-colors relative ${
-                          pattern.isActive ? 'bg-blue-600' : 'bg-gray-300'
+                          pattern.isActive ? 'bg-primary' : 'bg-gray-300'
                         }`}
                         title={pattern.isActive ? '無効にする' : '有効にする'}
                       >

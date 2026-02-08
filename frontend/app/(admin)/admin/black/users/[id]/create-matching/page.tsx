@@ -463,14 +463,14 @@ export default function CreateMatchingPage() {
                   placeholder="名前・IDで検索..."
                   value={filters.q || ''}
                   onChange={(e) => handleFilterChange({ ...filters, q: e.target.value })}
-                  className="flex-1 px-3 py-1.5 border border-gray-300 rounded text-sm"
+                  className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
                 />
               </div>
               <div className="flex flex-wrap gap-2">
                 <select
                   value={filters.prefectureId || ''}
                   onChange={(e) => handleFilterChange({ ...filters, prefectureId: e.target.value })}
-                  className="px-2 py-1 border border-gray-300 rounded text-xs"
+                  className="px-2 py-1 border border-gray-300 rounded-lg text-xs"
                 >
                   <option value="">都道府県</option>
                   {prefectures.map((p) => (
@@ -482,7 +482,7 @@ export default function CreateMatchingPage() {
                 <select
                   value={filters.occupationId || ''}
                   onChange={(e) => handleFilterChange({ ...filters, occupationId: e.target.value })}
-                  className="px-2 py-1 border border-gray-300 rounded text-xs"
+                  className="px-2 py-1 border border-gray-300 rounded-lg text-xs"
                 >
                   <option value="">職業</option>
                   {occupations.map((o) => (
@@ -494,7 +494,7 @@ export default function CreateMatchingPage() {
                 <select
                   value={filters.ageMin || ''}
                   onChange={(e) => handleFilterChange({ ...filters, ageMin: e.target.value })}
-                  className="px-2 py-1 border border-gray-300 rounded text-xs"
+                  className="px-2 py-1 border border-gray-300 rounded-lg text-xs"
                 >
                   <option value="">年齢下限</option>
                   {Array.from({ length: 41 }, (_, i) => 20 + i).map((age) => (
@@ -506,7 +506,7 @@ export default function CreateMatchingPage() {
                 <select
                   value={filters.ageMax || ''}
                   onChange={(e) => handleFilterChange({ ...filters, ageMax: e.target.value })}
-                  className="px-2 py-1 border border-gray-300 rounded text-xs"
+                  className="px-2 py-1 border border-gray-300 rounded-lg text-xs"
                 >
                   <option value="">年齢上限</option>
                   {Array.from({ length: 41 }, (_, i) => 20 + i).map((age) => (
@@ -816,7 +816,7 @@ export default function CreateMatchingPage() {
                     <div className="mt-4 pt-4 border-t border-gray-100">
                       <button
                         onClick={handleStartCreateMatching}
-                        className="w-full px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                        className="w-full px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors"
                       >
                         この方とマッチングを作成
                       </button>
@@ -904,7 +904,7 @@ export default function CreateMatchingPage() {
                         <button
                           onClick={handleCreateMatching}
                           disabled={isCreating}
-                          className="flex-1 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                          className="flex-1 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors disabled:opacity-50"
                         >
                           {isCreating ? '作成中...' : 'マッチングを作成'}
                         </button>

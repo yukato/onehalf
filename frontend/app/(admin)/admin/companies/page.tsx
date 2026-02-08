@@ -117,7 +117,7 @@ export default function CompaniesPage() {
             setFormError(null);
             setShowModal(true);
           }}
-          className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1.5"
+          className="px-3 py-1.5 bg-primary text-white text-sm rounded-lg hover:bg-primary-dark transition-colors flex items-center gap-1.5"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
@@ -253,7 +253,7 @@ export default function CompaniesPage() {
                         slug: formData.slug === autoSlug(formData.name) ? autoSlug(name) : formData.slug,
                       });
                     }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
                     placeholder="例: Demo Corporation"
                     required
                   />
@@ -266,7 +266,7 @@ export default function CompaniesPage() {
                     type="text"
                     value={formData.slug}
                     onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm font-mono"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm font-mono"
                     placeholder="demo-corp"
                     pattern="^[a-z0-9]+(-[a-z0-9]+)*$"
                     required
@@ -290,7 +290,7 @@ export default function CompaniesPage() {
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     isSaving || !formData.name.trim() || !formData.slug.trim()
                       ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                      : 'bg-primary text-white hover:bg-primary-dark'
                   }`}
                 >
                   {isSaving ? '作成中...' : '作成'}

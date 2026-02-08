@@ -140,7 +140,7 @@ export function ChatMessage({
                     href={CONTACT_FORM_URL}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-block px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+                    className="inline-block px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-primary-dark rounded-lg transition-colors"
                   >
                     お問い合わせフォーム
                   </a>
@@ -246,7 +246,7 @@ function MacroSuggestions({ macros }: { macros: MacroSuggestion[] }) {
                 </pre>
                 <button
                   type="button"
-                  className="mt-2 px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                  className="mt-2 px-3 py-1 text-xs bg-primary text-white rounded hover:bg-primary-dark transition-colors"
                   onClick={(e) => {
                     e.stopPropagation();
                     handleCopy(macro.comment_template, macro.macro_id);

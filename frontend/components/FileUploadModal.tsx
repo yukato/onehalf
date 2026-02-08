@@ -291,7 +291,7 @@ export function FileUploadModal({
                     disabled={isUploading}
                     className={`flex-1 px-3 py-2 text-sm font-medium rounded-lg border transition-colors ${
                       selectedType === type.value
-                        ? 'bg-blue-50 border-blue-500 text-blue-700'
+                        ? 'bg-primary-manilla/30 border-primary text-primary-dark'
                         : 'border-gray-300 text-gray-700 hover:bg-gray-50'
                     } disabled:opacity-50`}
                   >
@@ -344,7 +344,7 @@ export function FileUploadModal({
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     isUploading
                       ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                      : 'bg-primary text-white hover:bg-primary-dark'
                   }`}
                 >
                   {isUploading ? 'アップロード中...' : 'アップロード'}
@@ -361,7 +361,7 @@ export function FileUploadModal({
                   value={urlInput}
                   onChange={(e) => setUrlInput(e.target.value)}
                   placeholder="https://..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
                   disabled={isUploading}
                 />
               </div>
@@ -443,7 +443,7 @@ export function FileUploadModal({
             <button
               onClick={handleUrlSubmit}
               disabled={!urlInput.trim() || isUploading}
-              className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isUploading ? '登録中...' : '登録'}
             </button>

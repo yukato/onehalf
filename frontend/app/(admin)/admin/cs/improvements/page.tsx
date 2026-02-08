@@ -215,7 +215,7 @@ export default function ImprovementsPage() {
               className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-2 ${
                 isAnalyzing
                   ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  : 'bg-blue-600 text-white hover:bg-blue-700'
+                  : 'bg-primary text-white hover:bg-primary-dark'
               }`}
             >
               {isAnalyzing ? (
@@ -259,7 +259,7 @@ export default function ImprovementsPage() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
             >
               <option value="">すべて</option>
               <option value="pending">未対応</option>
@@ -393,7 +393,7 @@ export default function ImprovementsPage() {
                     className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
                       isGeneratingDraft
                         ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                        : 'bg-primary text-white hover:bg-primary-dark'
                     }`}
                   >
                     {isGeneratingDraft ? '生成中...' : '下書きを生成'}

@@ -248,7 +248,7 @@ export default function InterviewDetailPage() {
             <>
               <button
                 onClick={() => setEditing(true)}
-                className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
+                className="px-3 py-1.5 bg-primary text-white text-sm rounded-lg hover:bg-primary-dark transition-colors"
               >
                 編集
               </button>
@@ -270,7 +270,7 @@ export default function InterviewDetailPage() {
               </button>
               <button
                 onClick={handleSave}
-                className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                className="px-3 py-1.5 bg-primary text-white text-sm rounded-lg hover:bg-primary-dark disabled:opacity-50 transition-colors"
                 disabled={saving}
               >
                 {saving ? '保存中...' : '保存'}
@@ -295,7 +295,7 @@ export default function InterviewDetailPage() {
                 <select
                   value={formData.interviewTypeId}
                   onChange={(e) => setFormData({ ...formData, interviewTypeId: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
                 >
                   {interviewTypes.map((type) => (
                     <option key={type.id} value={type.id}>
@@ -310,7 +310,7 @@ export default function InterviewDetailPage() {
                 <select
                   value={formData.currentStatus}
                   onChange={(e) => setFormData({ ...formData, currentStatus: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
                 >
                   {Object.entries(STATUS_LABELS).map(([key, { label }]) => (
                     <option key={key} value={key}>
@@ -328,7 +328,7 @@ export default function InterviewDetailPage() {
                   type="datetime-local"
                   value={formData.scheduledAt}
                   onChange={(e) => setFormData({ ...formData, scheduledAt: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
                 />
               </div>
 
@@ -344,7 +344,7 @@ export default function InterviewDetailPage() {
                   }
                   min={15}
                   step={15}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
                 />
               </div>
 
@@ -355,7 +355,7 @@ export default function InterviewDetailPage() {
                   value={formData.meetingUrl}
                   onChange={(e) => setFormData({ ...formData, meetingUrl: e.target.value })}
                   placeholder="https://..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
                 />
               </div>
             </div>
@@ -449,7 +449,7 @@ export default function InterviewDetailPage() {
                         setUserSearch(e.target.value);
                         searchUsers(e.target.value);
                       }}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
                       placeholder="名前またはIDで検索..."
                     />
                     {userSearchResults.length > 0 && (
@@ -488,7 +488,7 @@ export default function InterviewDetailPage() {
                   type="text"
                   value={formData.guestName}
                   onChange={(e) => setFormData({ ...formData, guestName: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
                 />
               </div>
 
@@ -500,7 +500,7 @@ export default function InterviewDetailPage() {
                   type="email"
                   value={formData.guestEmail}
                   onChange={(e) => setFormData({ ...formData, guestEmail: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
                 />
               </div>
 
@@ -510,7 +510,7 @@ export default function InterviewDetailPage() {
                   type="tel"
                   value={formData.guestPhone}
                   onChange={(e) => setFormData({ ...formData, guestPhone: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
                 />
               </div>
             </div>
@@ -598,7 +598,7 @@ export default function InterviewDetailPage() {
                 onCompositionEnd={() => setIsComposing(false)}
                 placeholder="コメントを入力..."
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm resize-none"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm resize-none"
               />
               <div className="flex items-center justify-between mt-2">
                 <p className="text-xs text-gray-400">Shift + Enter で改行、Enter で送信</p>
@@ -608,7 +608,7 @@ export default function InterviewDetailPage() {
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     !newComment.trim() || isSubmittingComment
                       ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                      : 'bg-primary text-white hover:bg-primary-dark'
                   }`}
                 >
                   {isSubmittingComment ? '送信中...' : '送信'}

@@ -418,7 +418,7 @@ export default function SettingsPage() {
                           className={`flex items-center p-4 rounded-lg border transition-colors ${
                             model.enabled
                               ? isSelectedModel(model)
-                                ? 'border-blue-500 bg-blue-50 cursor-pointer'
+                                ? 'border-primary bg-primary-manilla/30 cursor-pointer'
                                 : 'border-gray-200 hover:border-gray-300 cursor-pointer'
                               : 'border-gray-100 bg-gray-50 cursor-not-allowed opacity-60'
                           }`}
@@ -430,7 +430,7 @@ export default function SettingsPage() {
                             checked={isSelectedModel(model)}
                             disabled={!model.enabled}
                             onChange={() => handleModelSelect(model)}
-                            className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                            className="w-4 h-4 text-primary border-gray-300 focus:ring-primary/50"
                           />
                           <div className="ml-3 flex-1">
                             <div className="flex items-center gap-2">
@@ -476,7 +476,7 @@ export default function SettingsPage() {
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                           isSaving || !hasChanges()
                             ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                            : 'bg-blue-600 text-white hover:bg-blue-700'
+                            : 'bg-primary text-white hover:bg-primary-dark'
                         }`}
                       >
                         {isSaving ? '保存中...' : '保存'}
@@ -499,7 +499,7 @@ export default function SettingsPage() {
                   </div>
                   <button
                     onClick={openCreateModal}
-                    className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                    className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors flex items-center gap-2"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
@@ -725,7 +725,7 @@ export default function SettingsPage() {
                     type="text"
                     value={formTitle}
                     onChange={(e) => setFormTitle(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
                     placeholder="例: 違反報告への誘導ルール"
                     maxLength={200}
                   />
@@ -738,7 +738,7 @@ export default function SettingsPage() {
                   <textarea
                     value={formContent}
                     onChange={(e) => setFormContent(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm font-mono"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm font-mono"
                     rows={18}
                     placeholder="ルールの内容を入力してください..."
                     maxLength={5000}
@@ -758,7 +758,7 @@ export default function SettingsPage() {
                         type="checkbox"
                         checked={formTargetMale}
                         onChange={(e) => setFormTargetMale(e.target.checked)}
-                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary/50"
                       />
                       <span className="text-sm text-gray-700">男性会員</span>
                     </label>
@@ -767,7 +767,7 @@ export default function SettingsPage() {
                         type="checkbox"
                         checked={formTargetFemale}
                         onChange={(e) => setFormTargetFemale(e.target.checked)}
-                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary/50"
                       />
                       <span className="text-sm text-gray-700">女性会員</span>
                     </label>
@@ -783,7 +783,7 @@ export default function SettingsPage() {
                     id="enabled"
                     checked={formEnabled}
                     onChange={(e) => setFormEnabled(e.target.checked)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary/50"
                   />
                   <label htmlFor="enabled" className="text-sm text-gray-700">
                     有効にする（チャットボットのプロンプトに反映）
@@ -805,7 +805,7 @@ export default function SettingsPage() {
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   isRuleSaving || !formTitle.trim() || !formContent.trim()
                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                    : 'bg-primary text-white hover:bg-primary-dark'
                 }`}
               >
                 {isRuleSaving ? '保存中...' : '保存'}

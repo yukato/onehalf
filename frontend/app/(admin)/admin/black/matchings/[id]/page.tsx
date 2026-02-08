@@ -726,7 +726,7 @@ export default function MatchingDetailPage() {
               <h3 className="text-lg font-semibold text-gray-900">フィードバック・評価</h3>
               <button
                 onClick={() => openFeedbackModal()}
-                className="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1"
+                className="px-3 py-1.5 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors flex items-center gap-1"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
@@ -1028,7 +1028,7 @@ export default function MatchingDetailPage() {
                     <button
                       onClick={handleSave}
                       disabled={isSaving}
-                      className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                      className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark disabled:opacity-50"
                     >
                       {isSaving ? '保存中...' : '保存'}
                     </button>
@@ -1217,7 +1217,7 @@ export default function MatchingDetailPage() {
                   onCompositionEnd={() => setIsComposing(false)}
                   placeholder="コメントを入力..."
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm resize-none"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm resize-none"
                   disabled={isSubmittingComment}
                 />
                 <div className="flex items-center justify-between mt-2">
@@ -1228,7 +1228,7 @@ export default function MatchingDetailPage() {
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                       !newComment.trim() || isSubmittingComment
                         ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                        : 'bg-primary text-white hover:bg-primary-dark'
                     }`}
                   >
                     {isSubmittingComment ? '送信中...' : '送信'}
@@ -1471,7 +1471,7 @@ export default function MatchingDetailPage() {
                   className={`w-full px-3 py-2 border rounded-lg text-sm resize-none ${
                     !feedbackUserId
                       ? 'border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed'
-                      : 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+                      : 'border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary'
                   }`}
                 />
                 {/* AI補完ボタン */}
@@ -1747,7 +1747,7 @@ export default function MatchingDetailPage() {
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   isSubmittingFeedback || !feedbackUserId || !feedbackContent.trim()
                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                    : 'bg-primary text-white hover:bg-primary-dark'
                 }`}
               >
                 {isSubmittingFeedback ? '登録中...' : '登録'}

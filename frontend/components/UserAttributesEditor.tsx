@@ -203,7 +203,7 @@ export function UserAttributesEditor({ userId, userGender }: UserAttributesEdito
           className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-colors ${
             !hasChanges || isSaving
               ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-              : 'bg-blue-600 text-white hover:bg-blue-700'
+              : 'bg-primary text-white hover:bg-primary-dark'
           }`}
         >
           {isSaving ? '保存中...' : '保存'}

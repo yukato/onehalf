@@ -35,7 +35,6 @@ module.exports = {
         // Utility
         accent: '#000000',
         surface: '#FAFAF7',
-        focus: '#61AAF2',
         error: '#BF4D43',
         'message-sent': '#F0F0EB',
         'message-received': '#FFFFFF',

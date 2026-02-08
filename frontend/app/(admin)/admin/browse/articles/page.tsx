@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { PageLayout } from '@/components/layout/PageLayout';
+import { SearchBox } from '@/components/ui/SearchBox';
 import { api } from '@/lib/api';
 import { formatDate } from '@/lib/utils';
 import type { ArticleItem } from '@/types';
@@ -61,8 +62,7 @@ export default function ArticlesPage() {
     }
   }, [isAuthenticated, fetchData]);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSearch = () => {
     setOffset(0);
     setSearchQuery(searchInput);
   };
@@ -90,37 +90,23 @@ export default function ArticlesPage() {
 
   return (
     <PageLayout currentPage="dashboard" title="FAQ記事一覧" onLogout={handleLogout}>
-      <form onSubmit={handleSearch} className="mb-4 flex items-center gap-4">
-        <div className="flex items-center gap-2 flex-1 max-w-md">
-          <input
-            type="text"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="タイトルで検索..."
-            className="flex-1 text-sm px-3 py-1.5 rounded-md border border-gray-300 bg-white text-gray-700"
-          />
-          <button
-            type="submit"
-            className="px-4 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
-          >
-            検索
-          </button>
-          {searchQuery && (
-            <button
-              type="button"
-              onClick={() => {
-                setSearchInput('');
-                setSearchQuery('');
-                setOffset(0);
-              }}
-              className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800"
-            >
-              クリア
-            </button>
-          )}
-        </div>
+      <div className="mb-4 flex items-center gap-4">
+        <SearchBox
+          value={searchInput}
+          onChange={setSearchInput}
+          onSubmit={handleSearch}
+          placeholder="タイトルで検索..."
+          isLoading={isFetching}
+          showClear={!!searchQuery}
+          onClear={() => {
+            setSearchInput('');
+            setSearchQuery('');
+            setOffset(0);
+          }}
+          className="flex-1 max-w-md"
+        />
         <div className="text-sm text-gray-500">{isFetching ? '読み込み中...' : `${total}件`}</div>
-      </form>
+      </div>
 
       {error && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm">
