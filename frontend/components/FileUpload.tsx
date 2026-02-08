@@ -102,7 +102,7 @@ export function FileUpload({
             value={urlInput}
             onChange={(e) => setUrlInput(e.target.value)}
             placeholder="https://..."
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light"
             disabled={isUploading}
           />
           <button

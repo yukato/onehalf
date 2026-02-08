@@ -181,7 +181,7 @@ export function UserAvailabilityPatternEditor({ userId }: UserAvailabilityPatter
           <select
             value={data.dayType}
             onChange={(e) => onChange({ ...data, dayType: e.target.value as DayType })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light"
           >
             {DAY_TYPE_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -197,7 +197,7 @@ export function UserAvailabilityPatternEditor({ userId }: UserAvailabilityPatter
           <select
             value={data.startTime}
             onChange={(e) => onChange({ ...data, startTime: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light"
           >
             {TIME_OPTIONS.map((time) => (
               <option key={time} value={time}>
@@ -213,7 +213,7 @@ export function UserAvailabilityPatternEditor({ userId }: UserAvailabilityPatter
           <select
             value={data.endTime}
             onChange={(e) => onChange({ ...data, endTime: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light"
           >
             {TIME_OPTIONS.map((time) => (
               <option key={time} value={time}>
@@ -232,7 +232,7 @@ export function UserAvailabilityPatternEditor({ userId }: UserAvailabilityPatter
           value={data.notes}
           onChange={(e) => onChange({ ...data, notes: e.target.value })}
           placeholder="例: 定時上がりの日のみ"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light"
         />
       </div>
 
@@ -243,7 +243,7 @@ export function UserAvailabilityPatternEditor({ userId }: UserAvailabilityPatter
           id={`active-${isNew ? 'new' : editingId}`}
           checked={data.isActive}
           onChange={(e) => onChange({ ...data, isActive: e.target.checked })}
-          className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary/50"
+          className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-cloud-light/50"
         />
         <label htmlFor={`active-${isNew ? 'new' : editingId}`} className="text-sm text-gray-700">
           有効

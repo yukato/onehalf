@@ -430,7 +430,7 @@ export default function SettingsPage() {
                             checked={isSelectedModel(model)}
                             disabled={!model.enabled}
                             onChange={() => handleModelSelect(model)}
-                            className="w-4 h-4 text-primary border-gray-300 focus:ring-primary/50"
+                            className="w-4 h-4 text-primary border-gray-300 focus:ring-cloud-light/50"
                           />
                           <div className="ml-3 flex-1">
                             <div className="flex items-center gap-2">
@@ -725,7 +725,7 @@ export default function SettingsPage() {
                     type="text"
                     value={formTitle}
                     onChange={(e) => setFormTitle(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                     placeholder="例: 違反報告への誘導ルール"
                     maxLength={200}
                   />
@@ -738,7 +738,7 @@ export default function SettingsPage() {
                   <textarea
                     value={formContent}
                     onChange={(e) => setFormContent(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm font-mono"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm font-mono"
                     rows={18}
                     placeholder="ルールの内容を入力してください..."
                     maxLength={5000}
@@ -758,7 +758,7 @@ export default function SettingsPage() {
                         type="checkbox"
                         checked={formTargetMale}
                         onChange={(e) => setFormTargetMale(e.target.checked)}
-                        className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary/50"
+                        className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-cloud-light/50"
                       />
                       <span className="text-sm text-gray-700">男性会員</span>
                     </label>
@@ -767,7 +767,7 @@ export default function SettingsPage() {
                         type="checkbox"
                         checked={formTargetFemale}
                         onChange={(e) => setFormTargetFemale(e.target.checked)}
-                        className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary/50"
+                        className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-cloud-light/50"
                       />
                       <span className="text-sm text-gray-700">女性会員</span>
                     </label>
@@ -783,7 +783,7 @@ export default function SettingsPage() {
                     id="enabled"
                     checked={formEnabled}
                     onChange={(e) => setFormEnabled(e.target.checked)}
-                    className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary/50"
+                    className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-cloud-light/50"
                   />
                   <label htmlFor="enabled" className="text-sm text-gray-700">
                     有効にする（チャットボットのプロンプトに反映）

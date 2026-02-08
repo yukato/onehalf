@@ -92,7 +92,7 @@ export function DocumentTagManager({ tags, onClose, onCreate, onUpdate, onDelete
               onChange={(e) => setNewName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
               placeholder="新しいタグ名"
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light"
             />
             <button
               onClick={handleCreate}
@@ -126,7 +126,7 @@ export function DocumentTagManager({ tags, onClose, onCreate, onUpdate, onDelete
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleUpdate(tag.id)}
-                      className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-primary/50"
+                      className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-cloud-light/50"
                     />
                     <button
                       onClick={() => handleUpdate(tag.id)}

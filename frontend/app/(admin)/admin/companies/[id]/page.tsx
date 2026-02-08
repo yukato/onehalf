@@ -256,7 +256,7 @@ export default function CompanyDetailPage() {
                     type="text"
                     value={editForm.name}
                     onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                    className="w-full max-w-md px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                    className="w-full max-w-md px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                   />
                 </div>
                 <div>
@@ -265,7 +265,7 @@ export default function CompanyDetailPage() {
                     type="text"
                     value={editForm.slug}
                     onChange={(e) => setEditForm({ ...editForm, slug: e.target.value })}
-                    className="w-full max-w-md px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm font-mono"
+                    className="w-full max-w-md px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm font-mono"
                     pattern="^[a-z0-9]+(-[a-z0-9]+)*$"
                   />
                 </div>
@@ -577,7 +577,7 @@ export default function CompanyDetailPage() {
                     type="email"
                     value={userForm.email}
                     onChange={(e) => setUserForm({ ...userForm, email: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                     placeholder="user@example.com"
                     required
                   />
@@ -590,7 +590,7 @@ export default function CompanyDetailPage() {
                     type="text"
                     value={userForm.username}
                     onChange={(e) => setUserForm({ ...userForm, username: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                     placeholder="山田太郎"
                     required
                   />
@@ -603,7 +603,7 @@ export default function CompanyDetailPage() {
                     type="password"
                     value={userForm.password}
                     onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                     placeholder={modalMode === 'edit' ? '変更する場合のみ入力' : ''}
                     required={modalMode === 'create'}
                   />
@@ -613,7 +613,7 @@ export default function CompanyDetailPage() {
                   <select
                     value={userForm.role}
                     onChange={(e) => setUserForm({ ...userForm, role: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                   >
                     <option value="member">Member</option>
                     <option value="admin">Admin</option>

@@ -1029,7 +1029,7 @@ export default function UserDetailPage() {
                       type="text"
                       value={formData.lastName || ''}
                       onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                       required
                     />
                   </div>
@@ -1041,7 +1041,7 @@ export default function UserDetailPage() {
                       type="text"
                       value={formData.firstName || ''}
                       onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                       required
                     />
                   </div>
@@ -1057,7 +1057,7 @@ export default function UserDetailPage() {
                       onChange={(e) =>
                         setFormData({ ...formData, gender: parseInt(e.target.value) })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                     >
                       <option value={1}>男性</option>
                       <option value={2}>女性</option>
@@ -1069,7 +1069,7 @@ export default function UserDetailPage() {
                       type="date"
                       value={formData.birthday || ''}
                       onChange={(e) => setFormData({ ...formData, birthday: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                     />
                   </div>
                 </div>
@@ -1082,7 +1082,7 @@ export default function UserDetailPage() {
                     type="email"
                     value={formData.email || ''}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                     required
                   />
                 </div>
@@ -1094,7 +1094,7 @@ export default function UserDetailPage() {
                       type="tel"
                       value={formData.mobileNumber || ''}
                       onChange={(e) => setFormData({ ...formData, mobileNumber: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                     />
                   </div>
                   <div>
@@ -1107,7 +1107,7 @@ export default function UserDetailPage() {
                           prefectureId: e.target.value ? parseInt(e.target.value) : undefined,
                         })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                     >
                       <option value="">選択してください</option>
                       {prefectures.map((pref) => (
@@ -1130,7 +1130,7 @@ export default function UserDetailPage() {
                           occupationId: e.target.value ? parseInt(e.target.value) : undefined,
                         })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                     >
                       <option value="">選択してください</option>
                       {occupations.map((occ) => (
@@ -1150,7 +1150,7 @@ export default function UserDetailPage() {
                           planId: e.target.value ? parseInt(e.target.value) : undefined,
                         })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                     >
                       <option value="">選択してください</option>
                       {plans.map((plan) => (
@@ -1175,7 +1175,7 @@ export default function UserDetailPage() {
                           currentStatus: e.target.value as UserStatusCode,
                         })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                     >
                       {USER_STATUSES.map((status) => (
                         <option key={status.code} value={status.code}>
@@ -1191,7 +1191,7 @@ export default function UserDetailPage() {
                       onChange={(e) =>
                         setFormData({ ...formData, score: parseInt(e.target.value) })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                     >
                       {Array.from({ length: 101 }, (_, i) => 100 - i).map((score) => (
                         <option key={score} value={score}>
@@ -1294,7 +1294,7 @@ export default function UserDetailPage() {
                   onCompositionEnd={() => setIsComposing(false)}
                   placeholder="コメントを入力..."
                   rows={2}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm resize-none"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm resize-none"
                 />
                 <button
                   onClick={handleSubmitComment}

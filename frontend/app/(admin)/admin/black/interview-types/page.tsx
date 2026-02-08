@@ -298,7 +298,7 @@ export default function InterviewTypesPage() {
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                     placeholder="初回面談"
                     required
                   />
@@ -312,7 +312,7 @@ export default function InterviewTypesPage() {
                     type="text"
                     value={formData.code}
                     onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                     placeholder="initial_interview"
                     required
                   />
@@ -331,7 +331,7 @@ export default function InterviewTypesPage() {
                     }
                     min={15}
                     step={15}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                   />
                 </div>
 
@@ -340,7 +340,7 @@ export default function InterviewTypesPage() {
                   <select
                     value={formData.targetGender}
                     onChange={(e) => setFormData({ ...formData, targetGender: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                   >
                     <option value="">共通（性別不問）</option>
                     <option value="1">男性向け</option>
@@ -357,7 +357,7 @@ export default function InterviewTypesPage() {
                       setFormData({ ...formData, sortOrder: parseInt(e.target.value) || 0 })
                     }
                     min={0}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                   />
                 </div>
 
@@ -367,7 +367,7 @@ export default function InterviewTypesPage() {
                     id="isActive"
                     checked={formData.isActive}
                     onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                    className="h-4 w-4 text-primary focus:ring-primary/50 border-gray-300 rounded"
+                    className="h-4 w-4 text-primary focus:ring-cloud-light/50 border-gray-300 rounded"
                   />
                   <label htmlFor="isActive" className="ml-2 block text-sm text-gray-900">
                     有効

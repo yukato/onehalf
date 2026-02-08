@@ -348,7 +348,7 @@ export default function ModulesPage() {
                             : formData.slug,
                       });
                     }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                     placeholder="例: 人材検索"
                     required
                   />
@@ -361,7 +361,7 @@ export default function ModulesPage() {
                     type="text"
                     value={formData.slug}
                     onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm font-mono"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm font-mono"
                     placeholder="talent-search"
                     pattern="^[a-z0-9]+(-[a-z0-9]+)*$"
                     required
@@ -376,7 +376,7 @@ export default function ModulesPage() {
                     type="text"
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                     placeholder="モジュールの説明"
                   />
                 </div>
@@ -386,7 +386,7 @@ export default function ModulesPage() {
                     <select
                       value={formData.icon}
                       onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                     >
                       {ICON_OPTIONS.map((opt) => (
                         <option key={opt.value} value={opt.value}>
@@ -403,7 +403,7 @@ export default function ModulesPage() {
                       onChange={(e) =>
                         setFormData({ ...formData, sortOrder: parseInt(e.target.value) || 0 })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                       min={0}
                     />
                   </div>

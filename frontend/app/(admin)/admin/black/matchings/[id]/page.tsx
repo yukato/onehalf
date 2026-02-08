@@ -1217,7 +1217,7 @@ export default function MatchingDetailPage() {
                   onCompositionEnd={() => setIsComposing(false)}
                   placeholder="コメントを入力..."
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm resize-none"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm resize-none"
                   disabled={isSubmittingComment}
                 />
                 <div className="flex items-center justify-between mt-2">
@@ -1471,7 +1471,7 @@ export default function MatchingDetailPage() {
                   className={`w-full px-3 py-2 border rounded-lg text-sm resize-none ${
                     !feedbackUserId
                       ? 'border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed'
-                      : 'border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary'
+                      : 'border-gray-300 focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light'
                   }`}
                 />
                 {/* AI補完ボタン */}

@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { PageLayout } from '@/components/layout/PageLayout';
+import { SearchBox } from '@/components/ui/SearchBox';
 import { api } from '@/lib/api';
 import { formatDateTime } from '@/lib/utils';
 import type { AdminUser, Interview, InterviewType, CreateInterviewRequest } from '@/types';
@@ -140,6 +141,10 @@ export default function InterviewsPage() {
       loadInterviews();
     }
   }, [isAuthenticated, loadInterviews]);
+
+  const handleSearch = () => {
+    loadInterviews();
+  };
 
   const handleLogout = async () => {
     await api.logout();
@@ -328,7 +333,6 @@ export default function InterviewsPage() {
       title="面談管理"
       currentUser={currentUser}
       onLogout={handleLogout}
-      showBackButton={false}
       headerActions={
         <div className="flex items-center gap-2">
           {/* ビュー切替 */}
@@ -411,71 +415,54 @@ export default function InterviewsPage() {
       <div className="space-y-4">
         {/* フィルター（リストビュー時のみ） */}
         {viewMode === 'list' && (
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <div className="flex flex-wrap gap-3 items-end">
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">検索</label>
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="ゲスト名・メール"
-                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary w-40"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">ステータス</label>
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
-                >
-                  <option value="">すべて</option>
-                  {Object.entries(STATUS_LABELS).map(([key, { label }]) => (
-                    <option key={key} value={key}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">面談種類</label>
-                <select
-                  value={typeFilter}
-                  onChange={(e) => setTypeFilter(e.target.value)}
-                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
-                >
-                  <option value="">すべて</option>
-                  {interviewTypes.map((type) => (
-                    <option key={type.id} value={type.id}>
-                      {type.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">開始日（から）</label>
+          <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
+            <SearchBox
+              value={searchQuery}
+              onChange={setSearchQuery}
+              onSubmit={handleSearch}
+              placeholder="ゲスト名・メールで検索..."
+            />
+            <div className="flex flex-wrap gap-3">
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light"
+              >
+                <option value="">ステータス: すべて</option>
+                {Object.entries(STATUS_LABELS).map(([key, { label }]) => (
+                  <option key={key} value={key}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value)}
+                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light"
+              >
+                <option value="">面談種類: すべて</option>
+                {interviewTypes.map((type) => (
+                  <option key={type.id} value={type.id}>
+                    {type.name}
+                  </option>
+                ))}
+              </select>
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs text-gray-500">開始日</span>
                 <input
                   type="date"
                   value={fromDate}
                   onChange={(e) => setFromDate(e.target.value)}
-                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light"
                 />
-              </div>
-
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">開始日（まで）</label>
+                <span className="text-xs text-gray-400">〜</span>
                 <input
                   type="date"
                   value={toDate}
                   onChange={(e) => setToDate(e.target.value)}
-                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light"
                 />
               </div>
-
               {(statusFilter || typeFilter || fromDate || toDate || searchQuery) && (
                 <button
                   onClick={() => {
@@ -803,7 +790,7 @@ export default function InterviewsPage() {
                   <select
                     value={formData.interviewTypeId}
                     onChange={(e) => handleTypeChange(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                     required
                   >
                     <option value="">選択してください</option>
@@ -826,7 +813,7 @@ export default function InterviewsPage() {
                     type="text"
                     value={formData.guestName}
                     onChange={(e) => setFormData({ ...formData, guestName: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                     placeholder="山田 太郎"
                     required
                   />
@@ -841,7 +828,7 @@ export default function InterviewsPage() {
                     type="email"
                     value={formData.guestEmail || ''}
                     onChange={(e) => setFormData({ ...formData, guestEmail: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                     placeholder="example@example.com"
                   />
                 </div>
@@ -853,7 +840,7 @@ export default function InterviewsPage() {
                     type="tel"
                     value={formData.guestPhone || ''}
                     onChange={(e) => setFormData({ ...formData, guestPhone: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                     placeholder="090-1234-5678"
                   />
                 </div>
@@ -867,7 +854,7 @@ export default function InterviewsPage() {
                     type="datetime-local"
                     value={formData.scheduledAt}
                     onChange={(e) => setFormData({ ...formData, scheduledAt: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                     required
                   />
                 </div>
@@ -885,7 +872,7 @@ export default function InterviewsPage() {
                     }
                     min={15}
                     step={15}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                   />
                 </div>
 
@@ -896,7 +883,7 @@ export default function InterviewsPage() {
                     type="url"
                     value={formData.meetingUrl || ''}
                     onChange={(e) => setFormData({ ...formData, meetingUrl: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                     placeholder="https://zoom.us/j/..."
                   />
                 </div>
@@ -907,7 +894,7 @@ export default function InterviewsPage() {
                   <textarea
                     value={formData.notes || ''}
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                     rows={3}
                     placeholder="面談に関するメモ..."
                   />

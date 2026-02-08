@@ -253,7 +253,7 @@ export default function CompaniesPage() {
                         slug: formData.slug === autoSlug(formData.name) ? autoSlug(name) : formData.slug,
                       });
                     }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                     placeholder="例: Demo Corporation"
                     required
                   />
@@ -266,7 +266,7 @@ export default function CompaniesPage() {
                     type="text"
                     value={formData.slug}
                     onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm font-mono"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm font-mono"
                     placeholder="demo-corp"
                     pattern="^[a-z0-9]+(-[a-z0-9]+)*$"
                     required

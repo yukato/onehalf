@@ -286,7 +286,7 @@ export default function VenuesPage() {
                 setFilterPrefecture(val);
                 loadVenues(searchQuery, !showInactive, { prefectureId: val, genre: filterGenre });
               }}
-              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light"
             >
               <option value="">都道府県: すべて</option>
               {prefectures.map((p) => (
@@ -306,7 +306,7 @@ export default function VenuesPage() {
                   genre: val,
                 });
               }}
-              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light"
             >
               <option value="">ジャンル: すべて</option>
               {genres.map((g) => (
@@ -327,7 +327,7 @@ export default function VenuesPage() {
                     genre: filterGenre,
                   });
                 }}
-                className="rounded border-gray-300 text-primary focus:ring-primary/50"
+                className="rounded border-gray-300 text-primary focus:ring-cloud-light/50"
               />
               非アクティブも表示
             </label>
@@ -576,7 +576,7 @@ export default function VenuesPage() {
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                     placeholder="レストラン名"
                     required
                   />
@@ -589,7 +589,7 @@ export default function VenuesPage() {
                       type="text"
                       value={formData.genre || ''}
                       onChange={(e) => setFormData({ ...formData, genre: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                       placeholder="イタリアン、和食など"
                     />
                   </div>
@@ -599,7 +599,7 @@ export default function VenuesPage() {
                       type="tel"
                       value={formData.phoneNumber || ''}
                       onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                       placeholder="03-1234-5678"
                     />
                   </div>
@@ -612,7 +612,7 @@ export default function VenuesPage() {
                       type="text"
                       value={formData.postalCode || ''}
                       onChange={(e) => setFormData({ ...formData, postalCode: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                       placeholder="123-4567"
                     />
                   </div>
@@ -626,7 +626,7 @@ export default function VenuesPage() {
                           prefectureId: e.target.value ? parseInt(e.target.value) : undefined,
                         })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                     >
                       <option value="">選択</option>
                       {prefectures.map((pref) => (
@@ -642,7 +642,7 @@ export default function VenuesPage() {
                       type="text"
                       value={formData.city || ''}
                       onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                       placeholder="渋谷区"
                     />
                   </div>
@@ -654,7 +654,7 @@ export default function VenuesPage() {
                     type="text"
                     value={formData.address || ''}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                     placeholder="〇〇町1-2-3 △△ビル5F"
                   />
                 </div>
@@ -667,7 +667,7 @@ export default function VenuesPage() {
                     type="url"
                     value={formData.googleMapUrl || ''}
                     onChange={(e) => setFormData({ ...formData, googleMapUrl: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                     placeholder="https://maps.google.com/..."
                   />
                 </div>
@@ -680,7 +680,7 @@ export default function VenuesPage() {
                     type="url"
                     value={formData.url || ''}
                     onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                     placeholder="https://tabelog.com/..."
                   />
                 </div>
@@ -690,7 +690,7 @@ export default function VenuesPage() {
                   <textarea
                     value={formData.notes || ''}
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                     rows={3}
                     placeholder="予約方法、特記事項など"
                   />
@@ -702,7 +702,7 @@ export default function VenuesPage() {
                     id="isActive"
                     checked={formData.isActive ?? true}
                     onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                    className="rounded border-gray-300 text-primary focus:ring-primary/50"
+                    className="rounded border-gray-300 text-primary focus:ring-cloud-light/50"
                   />
                   <label htmlFor="isActive" className="text-sm text-gray-700">
                     アクティブ（マッチングで選択可能）

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { PageLayout } from '@/components/layout/PageLayout';
+import { SearchBox } from '@/components/ui/SearchBox';
 import { api } from '@/lib/api';
 import { MatchingExtractorModal } from '@/components/MatchingExtractorModal';
 import { formatDateTime } from '@/lib/utils';
@@ -283,6 +284,16 @@ export default function MatchingsPage() {
     }
   };
 
+  const handleSearch = () => {
+    setOffset(0);
+    loadMatchings({
+      status: filterStatus,
+      fromDate: filterFromDate,
+      toDate: filterToDate,
+      q: filterQuery,
+    }, 0);
+  };
+
   const handleLogout = async () => {
     await api.logout();
     router.push('/admin/login');
@@ -466,63 +477,40 @@ export default function MatchingsPage() {
       <div className="space-y-4">
         {/* フィルタ（リストビュー時のみ） */}
         {viewMode === 'list' && (
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <div className="flex flex-wrap gap-3 items-end">
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">ユーザー検索</label>
-                <input
-                  type="text"
-                  value={filterQuery}
-                  onChange={(e) => setFilterQuery(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      setOffset(0);
-                      loadMatchings(
-                        {
-                          status: filterStatus,
-                          fromDate: filterFromDate,
-                          toDate: filterToDate,
-                          q: filterQuery,
-                        },
-                        0
-                      );
-                    }
-                  }}
-                  placeholder="名前で検索..."
-                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary w-40"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">ステータス</label>
-                <select
-                  value={filterStatus}
-                  onChange={(e) => {
-                    setFilterStatus(e.target.value);
-                    setOffset(0);
-                    loadMatchings(
-                      {
-                        status: e.target.value,
-                        fromDate: filterFromDate,
-                        toDate: filterToDate,
-                        q: filterQuery,
-                      },
-                      0
-                    );
-                  }}
-                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
-                >
-                  <option value="">すべて</option>
-                  {MATCHING_STATUSES.map((s) => (
-                    <option key={s.code} value={s.code}>
-                      {s.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">開始日（から）</label>
+          <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
+            <SearchBox
+              value={filterQuery}
+              onChange={setFilterQuery}
+              onSubmit={handleSearch}
+              placeholder="名前で検索..."
+            />
+            <div className="flex flex-wrap gap-3">
+              <select
+                value={filterStatus}
+                onChange={(e) => {
+                  setFilterStatus(e.target.value);
+                  setOffset(0);
+                  loadMatchings(
+                    {
+                      status: e.target.value,
+                      fromDate: filterFromDate,
+                      toDate: filterToDate,
+                      q: filterQuery,
+                    },
+                    0
+                  );
+                }}
+                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light"
+              >
+                <option value="">ステータス: すべて</option>
+                {MATCHING_STATUSES.map((s) => (
+                  <option key={s.code} value={s.code}>
+                    {s.label}
+                  </option>
+                ))}
+              </select>
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs text-gray-500">開始日</span>
                 <input
                   type="date"
                   value={filterFromDate}
@@ -539,12 +527,9 @@ export default function MatchingsPage() {
                       0
                     );
                   }}
-                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light"
                 />
-              </div>
-
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">開始日（まで）</label>
+                <span className="text-xs text-gray-400">〜</span>
                 <input
                   type="date"
                   value={filterToDate}
@@ -561,10 +546,9 @@ export default function MatchingsPage() {
                       0
                     );
                   }}
-                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                  className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light"
                 />
               </div>
-
               {(filterStatus || filterFromDate || filterToDate || filterQuery) && (
                 <button
                   onClick={() => {
@@ -1106,7 +1090,7 @@ export default function MatchingsPage() {
                           setMaleSearch(e.target.value);
                           searchMaleUsers(e.target.value);
                         }}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                         placeholder="名前またはIDで検索..."
                       />
                       {maleUsers.length > 0 && (
@@ -1180,7 +1164,7 @@ export default function MatchingsPage() {
                           setFemaleSearch(e.target.value);
                           searchFemaleUsers(e.target.value);
                         }}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                         placeholder="名前またはIDで検索..."
                       />
                       {femaleUsers.length > 0 && (
@@ -1218,7 +1202,7 @@ export default function MatchingsPage() {
                       type="datetime-local"
                       value={formData.startAt}
                       onChange={(e) => setFormData({ ...formData, startAt: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                       required
                     />
                   </div>
@@ -1230,7 +1214,7 @@ export default function MatchingsPage() {
                       type="datetime-local"
                       value={formData.endAt}
                       onChange={(e) => setFormData({ ...formData, endAt: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                       required
                     />
                   </div>
@@ -1242,7 +1226,7 @@ export default function MatchingsPage() {
                   <select
                     value={formData.venueId || ''}
                     onChange={(e) => setFormData({ ...formData, venueId: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                   >
                     <option value="">未設定</option>
                     {venues.map((venue) => (
@@ -1260,7 +1244,7 @@ export default function MatchingsPage() {
                   <textarea
                     value={formData.notes || ''}
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light text-sm"
                     rows={3}
                     placeholder="特記事項など"
                   />

@@ -133,7 +133,7 @@ export function DocumentUploadModal({ tags, onClose, onUpload }: DocumentUploadM
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder={file?.name || 'ファイル名がデフォルトで使用されます'}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light"
             />
           </div>
 

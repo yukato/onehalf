@@ -97,7 +97,7 @@ export function ChatInput({ onSubmit, placeholder, disabled, isPreview }: ChatIn
             placeholder={placeholder || 'メッセージを入力...'}
             disabled={disabled}
             rows={1}
-            className="flex-1 resize-none rounded-lg border border-gray-300 px-3 sm:px-4 py-2 text-base sm:text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:bg-gray-100 disabled:cursor-not-allowed"
+            className="flex-1 resize-none rounded-lg border border-gray-300 px-3 sm:px-4 py-2 text-base sm:text-sm focus:border-cloud-light focus:outline-none focus:ring-2 focus:ring-cloud-light/50 disabled:bg-gray-100 disabled:cursor-not-allowed"
           />
           <button
             type="submit"
