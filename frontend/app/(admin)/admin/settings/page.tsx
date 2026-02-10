@@ -5,29 +5,44 @@ import { useRouter } from 'next/navigation';
 import { PageLayout } from '@/components/layout/PageLayout';
 import { api } from '@/lib/api';
 import { formatActivityLogDate } from '@/lib/utils';
-import type { SettingsResponse, ModelInfo, OperationalRule, RuleHistory, AdminUser } from '@/types';
+import type { OperationalRule, RuleHistory, AdminUser } from '@/types';
 
-type SettingsTab = 'model' | 'rules';
 type ModalMode = 'create' | 'edit' | null;
 
-const settingsMenu = [
-  { id: 'model' as const, label: 'LLM モデル設定', icon: 'cpu' },
-  { id: 'rules' as const, label: 'FAQ 運用ルール', icon: 'document' },
+type SettingsTab = 'rules';
+
+const settingsMenu: { id: SettingsTab; label: string; icon: string }[] = [
+  { id: 'rules', label: 'FAQ 運用ルール', icon: 'document' },
 ];
+
+const renderIcon = (icon: string) => {
+  switch (icon) {
+    case 'cpu':
+      return (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+            d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+        </svg>
+      );
+    case 'document':
+      return (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      );
+    default:
+      return null;
+  }
+};
 
 export default function SettingsPage() {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<AdminUser | null>(null);
-  const [activeTab, setActiveTab] = useState<SettingsTab>('model');
 
-  // Model settings state
-  const [isSaving, setIsSaving] = useState(false);
-  const [settings, setSettings] = useState<SettingsResponse | null>(null);
-  const [selectedModel, setSelectedModel] = useState<{ provider: string; model: string } | null>(
-    null
-  );
+  const [activeTab, setActiveTab] = useState<SettingsTab>('rules');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
@@ -48,16 +63,6 @@ export default function SettingsPage() {
 
   // Delete confirmation
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
-
-  const loadSettings = useCallback(async () => {
-    try {
-      const data = await api.getSettings();
-      setSettings(data);
-      setSelectedModel({ provider: data.current.provider, model: data.current.model });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '設定の読み込みに失敗しました');
-    }
-  }, []);
 
   const loadRules = useCallback(async () => {
     try {
@@ -82,7 +87,7 @@ export default function SettingsPage() {
       if (api.getAccessToken()) {
         setIsAuthenticated(true);
         setCurrentUser(api.getCurrentUser());
-        await Promise.all([loadSettings(), loadRules(), loadHistory()]);
+        await Promise.all([loadRules(), loadHistory()]);
         setIsLoading(false);
         return;
       }
@@ -92,7 +97,7 @@ export default function SettingsPage() {
         const user = await api.getMe();
         setCurrentUser(user);
         setIsAuthenticated(true);
-        await Promise.all([loadSettings(), loadRules(), loadHistory()]);
+        await Promise.all([loadRules(), loadHistory()]);
       } catch {
         router.push('/admin/login');
       } finally {
@@ -101,51 +106,11 @@ export default function SettingsPage() {
     };
 
     checkAuth();
-  }, [router, loadSettings, loadRules, loadHistory]);
-
-  const handleSave = async () => {
-    if (!selectedModel) return;
-
-    setIsSaving(true);
-    setError(null);
-    setSuccess(null);
-
-    try {
-      const data = await api.updateSettings(selectedModel);
-      setSettings(data);
-      setSuccess('設定を保存しました');
-      setTimeout(() => setSuccess(null), 3000);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '設定の保存に失敗しました');
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  }, [router, loadRules, loadHistory]);
 
   const handleLogout = async () => {
     await api.logout();
     router.push('/admin/login');
-  };
-
-  const handleModelSelect = (model: ModelInfo) => {
-    if (!model.enabled) return;
-    setSelectedModel({ provider: model.provider, model: model.model });
-  };
-
-  const isCurrentModel = (model: ModelInfo) => {
-    return settings?.current.provider === model.provider && settings?.current.model === model.model;
-  };
-
-  const isSelectedModel = (model: ModelInfo) => {
-    return selectedModel?.provider === model.provider && selectedModel?.model === model.model;
-  };
-
-  const hasChanges = () => {
-    if (!settings || !selectedModel) return false;
-    return (
-      settings.current.provider !== selectedModel.provider ||
-      settings.current.model !== selectedModel.model
-    );
   };
 
   // Rules handlers
@@ -296,46 +261,6 @@ export default function SettingsPage() {
     }
   };
 
-  const getProviderLabel = (provider: string) => {
-    switch (provider) {
-      case 'anthropic':
-        return 'Anthropic';
-      case 'openai':
-        return 'OpenAI';
-      default:
-        return provider;
-    }
-  };
-
-  const renderIcon = (icon: string) => {
-    switch (icon) {
-      case 'cpu':
-        return (
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.5}
-              d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"
-            />
-          </svg>
-        );
-      case 'document':
-        return (
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.5}
-              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-            />
-          </svg>
-        );
-      default:
-        return null;
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -377,318 +302,221 @@ export default function SettingsPage() {
             ))}
           </nav>
         </div>
-
         {/* Content Area */}
         <div className="flex-1 p-6 overflow-y-auto">
           <div className="max-w-6xl">
-            {error && (
-              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-                {error}
-              </div>
-            )}
+        {error && (
+          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+            {error}
+          </div>
+        )}
 
-            {success && (
-              <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
-                {success}
-              </div>
-            )}
+        {success && (
+          <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
+            {success}
+          </div>
+        )}
 
-            {/* LLM Model Settings Tab */}
-            {activeTab === 'model' && (
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">LLM モデル設定</h2>
+        {/* FAQ Operational Rules */}
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">FAQ 運用ルール</h2>
+              <p className="text-sm text-gray-500 mt-1">
+                FAQチャットボットのシステムプロンプトに追加されるルールを管理します
+              </p>
+            </div>
+            <button
+              onClick={openCreateModal}
+              className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v16m8-8H4"
+                />
+              </svg>
+              新規追加
+            </button>
+          </div>
 
-                {settings && (
-                  <>
-                    <p className="text-sm text-gray-600 mb-4">
-                      現在のモデル:{' '}
-                      <span className="font-medium">
-                        {settings.available_models.find(
-                          (m) =>
-                            m.provider === settings.current.provider &&
-                            m.model === settings.current.model
-                        )?.name || settings.current.model}
-                      </span>
-                    </p>
-
-                    <div className="space-y-2">
-                      {settings.available_models.map((model) => (
-                        <label
-                          key={`${model.provider}-${model.model}`}
-                          className={`flex items-center p-4 rounded-lg border transition-colors ${
-                            model.enabled
-                              ? isSelectedModel(model)
-                                ? 'border-primary bg-primary-manilla/30 cursor-pointer'
-                                : 'border-gray-200 hover:border-gray-300 cursor-pointer'
-                              : 'border-gray-100 bg-gray-50 cursor-not-allowed opacity-60'
+          {/* Rules List */}
+          <div className="border border-gray-200 rounded-lg overflow-hidden">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    ルール名
+                  </th>
+                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
+                    対象
+                  </th>
+                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
+                    状態
+                  </th>
+                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-44">
+                    更新日
+                  </th>
+                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
+                    操作
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {rules.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-8 text-center text-gray-500 text-sm">
+                      ルールがありません
+                    </td>
+                  </tr>
+                ) : (
+                  rules.map((rule) => (
+                    <tr key={rule.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-3">
+                        <div className="text-sm font-medium text-gray-900">{rule.title}</div>
+                        <div className="text-xs text-gray-500 truncate max-w-md mt-0.5">
+                          {rule.content.substring(0, 60)}...
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                            !rule.target_gender || rule.target_gender.length === 0
+                              ? 'bg-yellow-100 text-yellow-700'
+                              : 'bg-blue-100 text-blue-700'
                           }`}
-                          onClick={() => handleModelSelect(model)}
                         >
-                          <input
-                            type="radio"
-                            name="model"
-                            checked={isSelectedModel(model)}
-                            disabled={!model.enabled}
-                            onChange={() => handleModelSelect(model)}
-                            className="w-4 h-4 text-primary border-gray-300 focus:ring-cloud-light/50"
-                          />
-                          <div className="ml-3 flex-1">
-                            <div className="flex items-center gap-2">
-                              <span
-                                className={`font-medium ${model.enabled ? 'text-gray-900' : 'text-gray-400'}`}
-                              >
-                                {model.name}
-                              </span>
-                              {isCurrentModel(model) && (
-                                <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full">
-                                  使用中
-                                </span>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-2 mt-1">
-                              <span
-                                className={`text-xs px-2 py-0.5 rounded ${
-                                  model.provider === 'anthropic'
-                                    ? 'bg-orange-100 text-orange-700'
-                                    : 'bg-emerald-100 text-emerald-700'
-                                }`}
-                              >
-                                {getProviderLabel(model.provider)}
-                              </span>
-                              {!model.enabled && (
-                                <span className="text-xs text-gray-400">
-                                  APIキーが設定されていません
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </label>
-                      ))}
-                    </div>
-
-                    <div className="mt-6 flex items-center justify-between">
-                      <p className="text-xs text-gray-500">
-                        環境変数が設定されているモデルのみ選択可能です
-                      </p>
-                      <button
-                        onClick={handleSave}
-                        disabled={isSaving || !hasChanges()}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                          isSaving || !hasChanges()
-                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                            : 'bg-primary text-white hover:bg-primary-dark'
-                        }`}
-                      >
-                        {isSaving ? '保存中...' : '保存'}
-                      </button>
-                    </div>
-                  </>
+                          {getTargetGenderLabel(rule.target_gender)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <button
+                          onClick={() => handleToggleEnabled(rule)}
+                          className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+                            rule.enabled
+                              ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          }`}
+                        >
+                          {rule.enabled ? '有効' : '無効'}
+                        </button>
+                      </td>
+                      <td className="px-4 py-3 text-center text-sm text-gray-500">
+                        {formatActivityLogDate(rule.updated_at)}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            onClick={() => openEditModal(rule)}
+                            className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                            title="編集"
+                          >
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                              />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => setDeleteConfirm(rule.id)}
+                            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                            title="削除"
+                          >
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                              />
+                            </svg>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
                 )}
-              </div>
-            )}
+              </tbody>
+            </table>
+          </div>
 
-            {/* Operational Rules Tab */}
-            {activeTab === 'rules' && (
-              <div className="bg-white rounded-lg border border-gray-200 p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h2 className="text-lg font-semibold text-gray-900">FAQ 運用ルール</h2>
-                    <p className="text-sm text-gray-500 mt-1">
-                      FAQチャットボットのシステムプロンプトに追加されるルールを管理します
-                    </p>
-                  </div>
-                  <button
-                    onClick={openCreateModal}
-                    className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark transition-colors flex items-center gap-2"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 4v16m8-8H4"
-                      />
-                    </svg>
-                    新規追加
-                  </button>
-                </div>
+          {/* History Section */}
+          <div className="mt-6">
+            <button
+              onClick={() => setShowHistory(!showHistory)}
+              className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700"
+            >
+              <svg
+                className={`w-4 h-4 transition-transform ${showHistory ? 'rotate-90' : ''}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+              変更履歴を表示
+            </button>
 
-                {/* Rules List */}
-                <div className="border border-gray-200 rounded-lg overflow-hidden">
-                  <table className="w-full">
-                    <thead className="bg-gray-50 border-b border-gray-200">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          ルール名
-                        </th>
-                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
-                          対象
-                        </th>
-                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
-                          状態
-                        </th>
-                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-44">
-                          更新日
-                        </th>
-                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
-                          操作
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200">
-                      {rules.length === 0 ? (
-                        <tr>
-                          <td colSpan={5} className="px-4 py-8 text-center text-gray-500 text-sm">
-                            ルールがありません
-                          </td>
-                        </tr>
-                      ) : (
-                        rules.map((rule) => (
-                          <tr key={rule.id} className="hover:bg-gray-50">
-                            <td className="px-4 py-3">
-                              <div className="text-sm font-medium text-gray-900">{rule.title}</div>
-                              <div className="text-xs text-gray-500 truncate max-w-md mt-0.5">
-                                {rule.content.substring(0, 60)}...
-                              </div>
-                            </td>
-                            <td className="px-4 py-3 text-center">
-                              <span
-                                className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                                  !rule.target_gender || rule.target_gender.length === 0
-                                    ? 'bg-yellow-100 text-yellow-700'
-                                    : 'bg-blue-100 text-blue-700'
-                                }`}
-                              >
-                                {getTargetGenderLabel(rule.target_gender)}
-                              </span>
-                            </td>
-                            <td className="px-4 py-3 text-center">
-                              <button
-                                onClick={() => handleToggleEnabled(rule)}
-                                className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
-                                  rule.enabled
-                                    ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                }`}
-                              >
-                                {rule.enabled ? '有効' : '無効'}
-                              </button>
-                            </td>
-                            <td className="px-4 py-3 text-center text-sm text-gray-500">
-                              {formatActivityLogDate(rule.updated_at)}
-                            </td>
-                            <td className="px-4 py-3 text-center">
-                              <div className="flex items-center justify-center gap-1">
-                                <button
-                                  onClick={() => openEditModal(rule)}
-                                  className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                                  title="編集"
-                                >
-                                  <svg
-                                    className="w-4 h-4"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                                    />
-                                  </svg>
-                                </button>
-                                <button
-                                  onClick={() => setDeleteConfirm(rule.id)}
-                                  className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                                  title="削除"
-                                >
-                                  <svg
-                                    className="w-4 h-4"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                    />
-                                  </svg>
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* History Section */}
-                <div className="mt-6">
-                  <button
-                    onClick={() => setShowHistory(!showHistory)}
-                    className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700"
-                  >
-                    <svg
-                      className={`w-4 h-4 transition-transform ${showHistory ? 'rotate-90' : ''}`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
-                    変更履歴を表示
-                  </button>
-
-                  {showHistory && (
-                    <div className="mt-3 border border-gray-200 rounded-lg overflow-hidden">
-                      <div className="max-h-64 overflow-y-auto">
-                        {history.length === 0 ? (
-                          <div className="px-4 py-6 text-center text-gray-500 text-sm">
-                            履歴がありません
-                          </div>
-                        ) : (
-                          <ul className="divide-y divide-gray-100">
-                            {history.slice(0, 30).map((item) => {
-                              const rule = rules.find((r) => r.id === item.rule_id);
-                              const ruleTitle =
-                                rule?.title ||
-                                item.changes?.title?.new ||
-                                item.changes?.title?.old ||
-                                '(削除済み)';
-                              return (
-                                <li
-                                  key={item.id}
-                                  className="px-4 py-3 flex items-center gap-3 text-sm"
-                                >
-                                  <span
-                                    className={`px-2 py-0.5 rounded text-xs font-medium ${getActionColor(item.action)}`}
-                                  >
-                                    {getRuleActionLabel(item.action)}
-                                  </span>
-                                  <span className="text-gray-900 flex-1">{ruleTitle}</span>
-                                  <span className="text-gray-400 text-xs">
-                                    {formatActivityLogDate(item.timestamp)}
-                                  </span>
-                                </li>
-                              );
-                            })}
-                          </ul>
-                        )}
-                      </div>
+            {showHistory && (
+              <div className="mt-3 border border-gray-200 rounded-lg overflow-hidden">
+                <div className="max-h-64 overflow-y-auto">
+                  {history.length === 0 ? (
+                    <div className="px-4 py-6 text-center text-gray-500 text-sm">
+                      履歴がありません
                     </div>
+                  ) : (
+                    <ul className="divide-y divide-gray-100">
+                      {history.slice(0, 30).map((item) => {
+                        const rule = rules.find((r) => r.id === item.rule_id);
+                        const ruleTitle =
+                          rule?.title ||
+                          item.changes?.title?.new ||
+                          item.changes?.title?.old ||
+                          '(削除済み)';
+                        return (
+                          <li
+                            key={item.id}
+                            className="px-4 py-3 flex items-center gap-3 text-sm"
+                          >
+                            <span
+                              className={`px-2 py-0.5 rounded text-xs font-medium ${getActionColor(item.action)}`}
+                            >
+                              {getRuleActionLabel(item.action)}
+                            </span>
+                            <span className="text-gray-900 flex-1">{ruleTitle}</span>
+                            <span className="text-gray-400 text-xs">
+                              {formatActivityLogDate(item.timestamp)}
+                            </span>
+                          </li>
+                        );
+                      })}
+                    </ul>
                   )}
                 </div>
               </div>
             )}
+          </div>
+        </div>
           </div>
         </div>
       </div>

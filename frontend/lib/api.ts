@@ -104,6 +104,43 @@ import type {
   DocumentTagsResponse,
   DocumentTag,
   DocumentSearchResponse,
+  DocumentChatResponse,
+  LlmSettingsResponse,
+  UpdateLlmSettingsRequest,
+  CustomersResponse,
+  Customer,
+  CreateCustomerRequest,
+  UpdateCustomerRequest,
+  ProductsResponse,
+  Product,
+  CreateProductRequest,
+  UpdateProductRequest,
+  ProductCategoriesResponse,
+  ProductCategory,
+  CsvImportResult,
+  QuotationsResponse,
+  Quotation,
+  CreateQuotationRequest,
+  OrdersResponse,
+  Order,
+  CreateOrderRequest,
+  DeliveryNotesResponse,
+  DeliveryNote,
+  InvoicesResponse,
+  Invoice,
+  SharedLinkResponse,
+  DashboardSummary,
+  DashboardSalesResponse,
+  DashboardRankingsResponse,
+  Receivable,
+  RecentOrder,
+  OrderStatusCount,
+  AutoSuggestionsResponse,
+  OrderSuggestionsResponse,
+  AiAnalysisResult,
+  OcrExtraction,
+  OcrExtractionsResponse,
+  UpdateOcrExtractionRequest,
 } from '@/types';
 
 // Python バックエンドのURL（FAQ/Internal/Admin機能）
@@ -1235,6 +1272,21 @@ class ApiClient {
     });
   }
 
+  async chatCompanyDocuments(
+    companySlug: string,
+    query: string,
+    conversationHistory: { role: string; content: string }[] = []
+  ): Promise<DocumentChatResponse> {
+    return this.requestNextApi<DocumentChatResponse>(
+      `/api/admin/c/${companySlug}/documents/chat`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, conversationHistory }),
+      }
+    );
+  }
+
   async searchCompanyDocuments(companySlug: string, query: string, limit?: number): Promise<DocumentSearchResponse> {
     const params = new URLSearchParams({ q: query });
     if (limit) params.set('limit', String(limit));
@@ -1263,6 +1315,402 @@ class ApiClient {
     await this.requestNextApi<{ success: boolean }>(`/api/admin/c/${companySlug}/documents/tags/${id}`, {
       method: 'DELETE',
     });
+  }
+
+  // Admin: Company LLM Settings
+  async getCompanyLlmSettings(companySlug: string): Promise<LlmSettingsResponse> {
+    return this.requestNextApi<LlmSettingsResponse>(`/api/admin/c/${companySlug}/settings`);
+  }
+
+  async updateCompanyLlmSettings(companySlug: string, data: UpdateLlmSettingsRequest): Promise<LlmSettingsResponse> {
+    return this.requestNextApi<LlmSettingsResponse>(`/api/admin/c/${companySlug}/settings`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Admin: Company Masters - Customers
+  async getCompanyCustomers(companySlug: string, filters?: { type?: string; q?: string; limit?: number; offset?: number }): Promise<CustomersResponse> {
+    const params = new URLSearchParams();
+    if (filters?.type) params.set('type', filters.type);
+    if (filters?.q) params.set('q', filters.q);
+    if (filters?.limit) params.set('limit', String(filters.limit));
+    if (filters?.offset) params.set('offset', String(filters.offset));
+    const qs = params.toString();
+    return this.requestNextApi<CustomersResponse>(`/api/admin/c/${companySlug}/masters/customers${qs ? `?${qs}` : ''}`);
+  }
+
+  async getCompanyCustomer(companySlug: string, id: string): Promise<Customer> {
+    return this.requestNextApi<Customer>(`/api/admin/c/${companySlug}/masters/customers/${id}`);
+  }
+
+  async createCompanyCustomer(companySlug: string, data: CreateCustomerRequest): Promise<Customer> {
+    return this.requestNextApi<Customer>(`/api/admin/c/${companySlug}/masters/customers`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateCompanyCustomer(companySlug: string, id: string, data: UpdateCustomerRequest): Promise<Customer> {
+    return this.requestNextApi<Customer>(`/api/admin/c/${companySlug}/masters/customers/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteCompanyCustomer(companySlug: string, id: string): Promise<void> {
+    await this.requestNextApi<{ success: boolean }>(`/api/admin/c/${companySlug}/masters/customers/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async importCompanyCustomers(companySlug: string, file: File): Promise<CsvImportResult> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.requestNextApiFormData<CsvImportResult>(`/api/admin/c/${companySlug}/masters/customers/import`, formData);
+  }
+
+  // Admin: Company Masters - Products
+  async getCompanyProducts(companySlug: string, filters?: { categoryId?: string; q?: string; limit?: number; offset?: number }): Promise<ProductsResponse> {
+    const params = new URLSearchParams();
+    if (filters?.categoryId) params.set('categoryId', filters.categoryId);
+    if (filters?.q) params.set('q', filters.q);
+    if (filters?.limit) params.set('limit', String(filters.limit));
+    if (filters?.offset) params.set('offset', String(filters.offset));
+    const qs = params.toString();
+    return this.requestNextApi<ProductsResponse>(`/api/admin/c/${companySlug}/masters/products${qs ? `?${qs}` : ''}`);
+  }
+
+  async getCompanyProduct(companySlug: string, id: string): Promise<Product> {
+    return this.requestNextApi<Product>(`/api/admin/c/${companySlug}/masters/products/${id}`);
+  }
+
+  async createCompanyProduct(companySlug: string, data: CreateProductRequest): Promise<Product> {
+    return this.requestNextApi<Product>(`/api/admin/c/${companySlug}/masters/products`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateCompanyProduct(companySlug: string, id: string, data: UpdateProductRequest): Promise<Product> {
+    return this.requestNextApi<Product>(`/api/admin/c/${companySlug}/masters/products/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteCompanyProduct(companySlug: string, id: string): Promise<void> {
+    await this.requestNextApi<{ success: boolean }>(`/api/admin/c/${companySlug}/masters/products/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async importCompanyProducts(companySlug: string, file: File): Promise<CsvImportResult> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.requestNextApiFormData<CsvImportResult>(`/api/admin/c/${companySlug}/masters/products/import`, formData);
+  }
+
+  // Admin: Company Masters - Product Categories
+  async getCompanyProductCategories(companySlug: string): Promise<ProductCategoriesResponse> {
+    return this.requestNextApi<ProductCategoriesResponse>(`/api/admin/c/${companySlug}/masters/products/categories`);
+  }
+
+  async createCompanyProductCategory(companySlug: string, data: { name: string; slug: string }): Promise<ProductCategory> {
+    return this.requestNextApi<ProductCategory>(`/api/admin/c/${companySlug}/masters/products/categories`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateCompanyProductCategory(companySlug: string, id: string, data: { name?: string }): Promise<void> {
+    await this.requestNextApi<{ success: boolean }>(`/api/admin/c/${companySlug}/masters/products/categories/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteCompanyProductCategory(companySlug: string, id: string): Promise<void> {
+    await this.requestNextApi<{ success: boolean }>(`/api/admin/c/${companySlug}/masters/products/categories/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Admin: Company Quotations
+  async getCompanyQuotations(companySlug: string, filters?: { customerId?: string; status?: string; q?: string; limit?: number; offset?: number }): Promise<QuotationsResponse> {
+    const params = new URLSearchParams();
+    if (filters?.customerId) params.set('customerId', filters.customerId);
+    if (filters?.status) params.set('status', filters.status);
+    if (filters?.q) params.set('q', filters.q);
+    if (filters?.limit) params.set('limit', String(filters.limit));
+    if (filters?.offset) params.set('offset', String(filters.offset));
+    const qs = params.toString();
+    return this.requestNextApi<QuotationsResponse>(`/api/admin/c/${companySlug}/quotations${qs ? `?${qs}` : ''}`);
+  }
+
+  async getCompanyQuotation(companySlug: string, id: string): Promise<Quotation> {
+    return this.requestNextApi<Quotation>(`/api/admin/c/${companySlug}/quotations/${id}`);
+  }
+
+  async createCompanyQuotation(companySlug: string, data: CreateQuotationRequest): Promise<Quotation> {
+    return this.requestNextApi<Quotation>(`/api/admin/c/${companySlug}/quotations`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteCompanyQuotation(companySlug: string, id: string): Promise<void> {
+    await this.requestNextApi<{ success: boolean }>(`/api/admin/c/${companySlug}/quotations/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async updateCompanyQuotationStatus(companySlug: string, id: string, status: string): Promise<void> {
+    await this.requestNextApi<{ success: boolean }>(`/api/admin/c/${companySlug}/quotations/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    });
+  }
+
+  async convertCompanyQuotation(companySlug: string, id: string): Promise<Order> {
+    return this.requestNextApi<Order>(`/api/admin/c/${companySlug}/quotations/${id}/convert`, {
+      method: 'POST',
+    });
+  }
+
+  async getCompanyQuotationSharedLinks(companySlug: string, id: string): Promise<{ links: SharedLinkResponse['link'][] }> {
+    return this.requestNextApi<{ links: SharedLinkResponse['link'][] }>(`/api/admin/c/${companySlug}/quotations/${id}/share`);
+  }
+
+  async createCompanyQuotationSharedLink(companySlug: string, id: string, data?: { canApprove?: boolean; expiresInDays?: number }): Promise<SharedLinkResponse> {
+    return this.requestNextApi<SharedLinkResponse>(`/api/admin/c/${companySlug}/quotations/${id}/share`, {
+      method: 'POST',
+      body: JSON.stringify(data || {}),
+    });
+  }
+
+  getCompanyQuotationPdfUrl(companySlug: string, id: string): string {
+    return `/api/admin/c/${companySlug}/quotations/${id}/pdf`;
+  }
+
+  // Admin: Company Orders
+  async getCompanyOrders(companySlug: string, filters?: { customerId?: string; status?: string; orderType?: string; q?: string; limit?: number; offset?: number }): Promise<OrdersResponse> {
+    const params = new URLSearchParams();
+    if (filters?.customerId) params.set('customerId', filters.customerId);
+    if (filters?.status) params.set('status', filters.status);
+    if (filters?.orderType) params.set('orderType', filters.orderType);
+    if (filters?.q) params.set('q', filters.q);
+    if (filters?.limit) params.set('limit', String(filters.limit));
+    if (filters?.offset) params.set('offset', String(filters.offset));
+    const qs = params.toString();
+    return this.requestNextApi<OrdersResponse>(`/api/admin/c/${companySlug}/orders${qs ? `?${qs}` : ''}`);
+  }
+
+  async getCompanyOrder(companySlug: string, id: string): Promise<Order> {
+    return this.requestNextApi<Order>(`/api/admin/c/${companySlug}/orders/${id}`);
+  }
+
+  async createCompanyOrder(companySlug: string, data: CreateOrderRequest): Promise<Order> {
+    return this.requestNextApi<Order>(`/api/admin/c/${companySlug}/orders`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteCompanyOrder(companySlug: string, id: string): Promise<void> {
+    await this.requestNextApi<{ success: boolean }>(`/api/admin/c/${companySlug}/orders/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async updateCompanyOrderStatus(companySlug: string, id: string, status: string): Promise<void> {
+    await this.requestNextApi<{ success: boolean }>(`/api/admin/c/${companySlug}/orders/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    });
+  }
+
+  async getCompanyOrderSharedLinks(companySlug: string, id: string): Promise<{ links: SharedLinkResponse['link'][] }> {
+    return this.requestNextApi<{ links: SharedLinkResponse['link'][] }>(`/api/admin/c/${companySlug}/orders/${id}/share`);
+  }
+
+  async createCompanyOrderSharedLink(companySlug: string, id: string, data?: { canApprove?: boolean; expiresInDays?: number }): Promise<SharedLinkResponse> {
+    return this.requestNextApi<SharedLinkResponse>(`/api/admin/c/${companySlug}/orders/${id}/share`, {
+      method: 'POST',
+      body: JSON.stringify(data || {}),
+    });
+  }
+
+  // Admin: Company OCR
+  async getCompanyOcrExtractions(companySlug: string, filters?: { status?: string; limit?: number; offset?: number }): Promise<OcrExtractionsResponse> {
+    const params = new URLSearchParams();
+    if (filters?.status) params.set('status', filters.status);
+    if (filters?.limit) params.set('limit', String(filters.limit));
+    if (filters?.offset) params.set('offset', String(filters.offset));
+    const qs = params.toString();
+    return this.requestNextApi<OcrExtractionsResponse>(`/api/admin/c/${companySlug}/orders/ocr${qs ? `?${qs}` : ''}`);
+  }
+
+  async getCompanyOcrExtraction(companySlug: string, id: string): Promise<OcrExtraction> {
+    return this.requestNextApi<OcrExtraction>(`/api/admin/c/${companySlug}/orders/ocr/${id}`);
+  }
+
+  async uploadCompanyOcrImage(companySlug: string, file: File, sourceType?: string): Promise<OcrExtraction> {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (sourceType) formData.append('sourceType', sourceType);
+    return this.requestNextApiFormData<OcrExtraction>(`/api/admin/c/${companySlug}/orders/ocr`, formData);
+  }
+
+  async updateCompanyOcrExtraction(companySlug: string, id: string, data: UpdateOcrExtractionRequest): Promise<OcrExtraction> {
+    return this.requestNextApi<OcrExtraction>(`/api/admin/c/${companySlug}/orders/ocr/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async convertCompanyOcrToOrder(companySlug: string, id: string): Promise<{ orderId: string; orderNumber: string }> {
+    return this.requestNextApi<{ orderId: string; orderNumber: string }>(`/api/admin/c/${companySlug}/orders/ocr/${id}/convert`, {
+      method: 'POST',
+    });
+  }
+
+  // Admin: Company Delivery Notes
+  async getCompanyDeliveryNotes(companySlug: string, filters?: { customerId?: string; orderId?: string; status?: string; q?: string; limit?: number; offset?: number }): Promise<DeliveryNotesResponse> {
+    const params = new URLSearchParams();
+    if (filters?.customerId) params.set('customerId', filters.customerId);
+    if (filters?.orderId) params.set('orderId', filters.orderId);
+    if (filters?.status) params.set('status', filters.status);
+    if (filters?.q) params.set('q', filters.q);
+    if (filters?.limit) params.set('limit', String(filters.limit));
+    if (filters?.offset) params.set('offset', String(filters.offset));
+    const qs = params.toString();
+    return this.requestNextApi<DeliveryNotesResponse>(`/api/admin/c/${companySlug}/delivery-notes${qs ? `?${qs}` : ''}`);
+  }
+
+  async getCompanyDeliveryNote(companySlug: string, id: string): Promise<DeliveryNote> {
+    return this.requestNextApi<DeliveryNote>(`/api/admin/c/${companySlug}/delivery-notes/${id}`);
+  }
+
+  async createCompanyDeliveryNote(companySlug: string, data: { orderId: string; deliveryDate?: string }): Promise<DeliveryNote> {
+    return this.requestNextApi<DeliveryNote>(`/api/admin/c/${companySlug}/delivery-notes`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteCompanyDeliveryNote(companySlug: string, id: string): Promise<void> {
+    await this.requestNextApi<{ success: boolean }>(`/api/admin/c/${companySlug}/delivery-notes/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async updateCompanyDeliveryNoteStatus(companySlug: string, id: string, status: string): Promise<void> {
+    await this.requestNextApi<{ success: boolean }>(`/api/admin/c/${companySlug}/delivery-notes/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    });
+  }
+
+  async getCompanyDeliveryNoteSharedLinks(companySlug: string, id: string): Promise<{ links: SharedLinkResponse['link'][] }> {
+    return this.requestNextApi<{ links: SharedLinkResponse['link'][] }>(`/api/admin/c/${companySlug}/delivery-notes/${id}/share`);
+  }
+
+  async createCompanyDeliveryNoteSharedLink(companySlug: string, id: string, data?: { canApprove?: boolean; expiresInDays?: number }): Promise<SharedLinkResponse> {
+    return this.requestNextApi<SharedLinkResponse>(`/api/admin/c/${companySlug}/delivery-notes/${id}/share`, {
+      method: 'POST',
+      body: JSON.stringify(data || {}),
+    });
+  }
+
+  // Admin: Company Invoices
+  async getCompanyInvoices(companySlug: string, filters?: { customerId?: string; status?: string; q?: string; limit?: number; offset?: number }): Promise<InvoicesResponse> {
+    const params = new URLSearchParams();
+    if (filters?.customerId) params.set('customerId', filters.customerId);
+    if (filters?.status) params.set('status', filters.status);
+    if (filters?.q) params.set('q', filters.q);
+    if (filters?.limit) params.set('limit', String(filters.limit));
+    if (filters?.offset) params.set('offset', String(filters.offset));
+    const qs = params.toString();
+    return this.requestNextApi<InvoicesResponse>(`/api/admin/c/${companySlug}/invoices${qs ? `?${qs}` : ''}`);
+  }
+
+  async getCompanyInvoice(companySlug: string, id: string): Promise<Invoice> {
+    return this.requestNextApi<Invoice>(`/api/admin/c/${companySlug}/invoices/${id}`);
+  }
+
+  async createCompanyInvoice(companySlug: string, data: { customerId: string; deliveryNoteIds: string[]; invoiceDate: string; dueDate: string; notes?: string }): Promise<Invoice> {
+    return this.requestNextApi<Invoice>(`/api/admin/c/${companySlug}/invoices`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteCompanyInvoice(companySlug: string, id: string): Promise<void> {
+    await this.requestNextApi<{ success: boolean }>(`/api/admin/c/${companySlug}/invoices/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async updateCompanyInvoiceStatus(companySlug: string, id: string, status: string): Promise<void> {
+    await this.requestNextApi<{ success: boolean }>(`/api/admin/c/${companySlug}/invoices/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    });
+  }
+
+  async addCompanyInvoicePayment(companySlug: string, id: string, data: { paymentDate: string; amount: number; paymentMethod?: string; reference?: string; notes?: string }): Promise<void> {
+    await this.requestNextApi<{ success: boolean }>(`/api/admin/c/${companySlug}/invoices/${id}/payments`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getCompanyInvoiceSharedLinks(companySlug: string, id: string): Promise<{ links: SharedLinkResponse['link'][] }> {
+    return this.requestNextApi<{ links: SharedLinkResponse['link'][] }>(`/api/admin/c/${companySlug}/invoices/${id}/share`);
+  }
+
+  async createCompanyInvoiceSharedLink(companySlug: string, id: string, data?: { canApprove?: boolean; expiresInDays?: number }): Promise<SharedLinkResponse> {
+    return this.requestNextApi<SharedLinkResponse>(`/api/admin/c/${companySlug}/invoices/${id}/share`, {
+      method: 'POST',
+      body: JSON.stringify(data || {}),
+    });
+  }
+
+  // Admin: Company Dashboard
+  async getCompanyDashboardSummary(companySlug: string): Promise<{ summary: DashboardSummary; recentOrders: RecentOrder[]; statusDistribution: OrderStatusCount[] }> {
+    return this.requestNextApi(`/api/admin/c/${companySlug}/dashboard`);
+  }
+
+  async getCompanyDashboardSales(companySlug: string, year?: number, month?: number): Promise<DashboardSalesResponse> {
+    const params = new URLSearchParams();
+    if (year) params.set('year', String(year));
+    if (month) params.set('month', String(month));
+    const qs = params.toString();
+    return this.requestNextApi(`/api/admin/c/${companySlug}/dashboard/sales${qs ? `?${qs}` : ''}`);
+  }
+
+  async getCompanyDashboardRankings(companySlug: string, limit?: number): Promise<DashboardRankingsResponse> {
+    const qs = limit ? `?limit=${limit}` : '';
+    return this.requestNextApi(`/api/admin/c/${companySlug}/dashboard/rankings${qs}`);
+  }
+
+  async getCompanyDashboardReceivables(companySlug: string): Promise<{ receivables: Receivable[] }> {
+    return this.requestNextApi(`/api/admin/c/${companySlug}/dashboard/receivables`);
+  }
+
+  async getCompanyDashboardAiAnalysis(companySlug: string, refresh?: boolean): Promise<AiAnalysisResult> {
+    const qs = refresh ? '?refresh=true' : '';
+    return this.requestNextApi<AiAnalysisResult>(`/api/admin/c/${companySlug}/dashboard/ai-analysis${qs}`);
+  }
+
+  // Admin: Company Suggestions
+  async getCompanySuggestions(companySlug: string): Promise<AutoSuggestionsResponse> {
+    return this.requestNextApi<AutoSuggestionsResponse>(`/api/admin/c/${companySlug}/suggestions`);
+  }
+
+  async getCompanyOrderSuggestions(companySlug: string, customerId: string): Promise<OrderSuggestionsResponse> {
+    return this.requestNextApi<OrderSuggestionsResponse>(`/api/admin/c/${companySlug}/orders/suggestions?customerId=${customerId}`);
   }
 
   // CSV Export - ブラウザでダウンロードするためBlobを返す

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyCompanyAccessToken } from '@/lib/company-auth';
 import { listDocuments, insertDocument } from '@/lib/documents/queries';
-import { uploadToS3 } from '@/lib/s3';
+import { getStorage } from '@/lib/storage';
 import { processDocument } from '@/lib/documents/process';
 import { prisma } from '@/lib/prisma';
 
@@ -51,8 +51,8 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(await file.arrayBuffer());
     const mimeType = file.type || 'application/octet-stream';
 
-    // S3にアップロード
-    const s3Result = await uploadToS3(buffer, {
+    const storage = getStorage();
+    const s3Result = await storage.upload(buffer, {
       folder: `documents/${payload.companySlug}`,
       originalName: file.name,
       mimeType,
@@ -78,14 +78,29 @@ export async function POST(request: NextRequest) {
 
     // タグ割り当て
     if (tagIdsStr) {
+      let tagIds: string[];
+      try {
+        const parsed = JSON.parse(tagIdsStr);
+        if (!Array.isArray(parsed) || !parsed.every((id: unknown) => typeof id === 'string')) {
+          return NextResponse.json({ detail: 'tagIds must be a JSON array of strings' }, { status: 400 });
+        }
+        tagIds = parsed;
+      } catch {
+        return NextResponse.json({ detail: 'tagIds is not valid JSON' }, { status: 400 });
+      }
       const { updateDocument } = await import('@/lib/documents/queries');
-      const tagIds = JSON.parse(tagIdsStr) as string[];
       await updateDocument(payload.companySlug, docId, { tagIds });
     }
 
     // 非同期でドキュメント処理を開始（fire-and-forget）
-    processDocument(payload.companySlug, docId, s3Result.path, mimeType).catch((err) => {
-      console.error('Background document processing failed:', err);
+    processDocument(payload.companySlug, docId, s3Result.path, mimeType).catch(async (err) => {
+      console.error(`Background document processing critically failed [company=${payload.companySlug}, doc=${docId}]:`, err);
+      try {
+        const { updateDocumentStatus } = await import('@/lib/documents/queries');
+        await updateDocumentStatus(payload.companySlug, docId, 'error', { errorMessage: 'ドキュメント処理で予期しないエラーが発生しました。' });
+      } catch (fallbackErr) {
+        console.error(`Last-resort status update also failed [doc=${docId}]:`, fallbackErr);
+      }
     });
 
     // 作成したドキュメントを返却

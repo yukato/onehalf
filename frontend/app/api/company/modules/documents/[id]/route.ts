@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyCompanyAccessToken } from '@/lib/company-auth';
 import { getDocument, updateDocument, deleteDocument } from '@/lib/documents/queries';
-import { deleteFromS3 } from '@/lib/s3';
+import { getStorage } from '@/lib/storage';
 
 async function authenticateCompany(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
@@ -78,9 +78,9 @@ export async function DELETE(
 
     if (s3Path) {
       try {
-        await deleteFromS3(s3Path);
+        await getStorage().delete(s3Path);
       } catch (err) {
-        console.error('Failed to delete from S3:', err);
+        console.error(`[ORPHAN] Storage delete failed, orphaned file: ${s3Path}`, err);
       }
     }
 

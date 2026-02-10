@@ -31,7 +31,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center mb-8">
-          <Logo className="h-8 text-slate-medium" />
+          <Logo className="h-8 text-slate-light" />
         </div>
 
         <form

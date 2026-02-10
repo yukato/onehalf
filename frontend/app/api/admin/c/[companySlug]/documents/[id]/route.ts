@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyAccessToken } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { getDocument, updateDocument, deleteDocument } from '@/lib/documents/queries';
-import { deleteFromS3 } from '@/lib/s3';
+import { getStorage } from '@/lib/storage';
 
 async function authenticateAdmin(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
@@ -96,9 +96,9 @@ export async function DELETE(
     const s3Path = await deleteDocument(companySlug, id);
     if (s3Path) {
       try {
-        await deleteFromS3(s3Path);
+        await getStorage().delete(s3Path);
       } catch (err) {
-        console.error('Failed to delete from S3:', err);
+        console.error(`[ORPHAN] Storage delete failed, orphaned file: ${s3Path}`, err);
       }
     }
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { formatDate } from '@/lib/utils';
 import type { DocumentItem } from '@/types';
 
 interface DocumentListProps {
@@ -17,11 +18,6 @@ function formatFileSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function formatDate(dateStr: string) {
-  const date = new Date(dateStr);
-  return `${date.getMonth() + 1}/${date.getDate()}`;
 }
 
 function StatusBadge({ status }: { status: DocumentItem['status'] }) {
@@ -66,6 +62,13 @@ function FileIcon({ mimeType }: { mimeType: string }) {
       </div>
     );
   }
+  if (mimeType.includes('spreadsheetml') || mimeType.includes('ms-excel')) {
+    return (
+      <div className="w-8 h-8 rounded bg-green-100 flex items-center justify-center flex-shrink-0">
+        <span className="text-[10px] font-bold text-green-600">XLS</span>
+      </div>
+    );
+  }
   return (
     <div className="w-8 h-8 rounded bg-gray-100 flex items-center justify-center flex-shrink-0">
       <span className="text-[10px] font-bold text-gray-500">TXT</span>
@@ -99,7 +102,7 @@ export function DocumentList({ documents, total, offset, limit, onPageChange, on
             <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">タグ</th>
             <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">サイズ</th>
             <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">ステータス</th>
-            <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">日付</th>
+            <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">作成日</th>
             <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase">操作</th>
           </tr>
         </thead>

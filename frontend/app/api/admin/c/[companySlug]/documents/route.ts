@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyAccessToken } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { listDocuments, insertDocument } from '@/lib/documents/queries';
-import { uploadToS3 } from '@/lib/s3';
+import { getStorage } from '@/lib/storage';
 import { processDocument } from '@/lib/documents/process';
 
 async function authenticateAdmin(request: NextRequest) {
@@ -73,7 +73,8 @@ export async function POST(
     const buffer = Buffer.from(await file.arrayBuffer());
     const mimeType = file.type || 'application/octet-stream';
 
-    const s3Result = await uploadToS3(buffer, {
+    const storage = getStorage();
+    const s3Result = await storage.upload(buffer, {
       folder: `documents/${companySlug}`,
       originalName: file.name,
       mimeType,
@@ -97,13 +98,28 @@ export async function POST(
     });
 
     if (tagIdsStr) {
+      let tagIds: string[];
+      try {
+        const parsed = JSON.parse(tagIdsStr);
+        if (!Array.isArray(parsed) || !parsed.every((id: unknown) => typeof id === 'string')) {
+          return NextResponse.json({ detail: 'tagIds must be a JSON array of strings' }, { status: 400 });
+        }
+        tagIds = parsed;
+      } catch {
+        return NextResponse.json({ detail: 'tagIds is not valid JSON' }, { status: 400 });
+      }
       const { updateDocument } = await import('@/lib/documents/queries');
-      const tagIds = JSON.parse(tagIdsStr) as string[];
       await updateDocument(companySlug, docId, { tagIds });
     }
 
-    processDocument(companySlug, docId, s3Result.path, mimeType).catch((err) => {
-      console.error('Background document processing failed:', err);
+    processDocument(companySlug, docId, s3Result.path, mimeType).catch(async (err) => {
+      console.error(`Background document processing critically failed [company=${companySlug}, doc=${docId}]:`, err);
+      try {
+        const { updateDocumentStatus } = await import('@/lib/documents/queries');
+        await updateDocumentStatus(companySlug, docId, 'error', { errorMessage: 'ドキュメント処理で予期しないエラーが発生しました。' });
+      } catch (fallbackErr) {
+        console.error(`Last-resort status update also failed [doc=${docId}]:`, fallbackErr);
+      }
     });
 
     const { getDocument } = await import('@/lib/documents/queries');

@@ -1,0 +1,250 @@
+'use client';
+
+import { StatusBadge } from '@/components/ui/StatusBadge';
+import { formatCurrency } from '@/components/ui/AmountDisplay';
+import { ORDER_TYPE_LABELS } from '@/types';
+import type { Order, OrderStatus, OrderType, MachineCustomFields, RepairCustomFields, SmallItemCustomFields } from '@/types';
+
+const ORDER_TYPE_COLORS: Record<OrderType, string> = {
+  general: 'bg-gray-100 text-gray-600',
+  repair: 'bg-blue-100 text-blue-700',
+  machine: 'bg-green-100 text-green-700',
+  small_item: 'bg-orange-100 text-orange-700',
+};
+
+const NEXT_STATUS: Partial<Record<OrderStatus, { status: OrderStatus; label: string }>> = {
+  pending: { status: 'confirmed', label: '確定にする' },
+  confirmed: { status: 'in_production', label: '製造中にする' },
+  in_production: { status: 'ready', label: '出荷準備完了にする' },
+  ready: { status: 'delivered', label: '納品済にする' },
+  delivered: { status: 'completed', label: '完了にする' },
+};
+
+interface OrderDetailProps {
+  order: Order;
+  onClose: () => void;
+  onShare: () => void;
+  onStatusChange: (status: string) => void;
+}
+
+export function OrderDetail({ order, onClose, onShare, onStatusChange }: OrderDetailProps) {
+  const nextStatus = NEXT_STATUS[order.status as OrderStatus];
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
+      <div
+        className="bg-white rounded-lg shadow-xl max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+          <div className="flex items-center gap-3">
+            <h3 className="text-lg font-semibold text-gray-900">受注詳細</h3>
+            <StatusBadge status={order.status} size="md" />
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-2 px-6 py-3 border-b border-gray-100 bg-gray-50">
+          <button
+            disabled
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-400 bg-white border border-gray-200 rounded-lg cursor-not-allowed"
+            title="準備中"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            PDF出力
+          </button>
+          <button
+            onClick={onShare}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+            </svg>
+            共有リンク
+          </button>
+          {nextStatus && (
+            <button
+              onClick={() => onStatusChange(nextStatus.status)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-white bg-primary rounded-lg hover:bg-primary/90 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+              {nextStatus.label}
+            </button>
+          )}
+        </div>
+
+        {/* Content */}
+        <div className="px-6 py-4 space-y-6">
+          {/* Basic info */}
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <span className="text-gray-500">受注番号</span>
+              <p className="font-mono font-medium text-gray-900">{order.orderNumber}</p>
+            </div>
+            <div>
+              <span className="text-gray-500">売上番号</span>
+              <p className="font-mono font-medium text-gray-900">{order.salesNumber || '—'}</p>
+            </div>
+            <div>
+              <span className="text-gray-500">取引先</span>
+              <p className="font-medium text-gray-900">{order.customer.name}</p>
+            </div>
+            <div>
+              <span className="text-gray-500">作成者</span>
+              <p className="text-gray-900">{order.createdByName}</p>
+            </div>
+            <div>
+              <span className="text-gray-500">種別</span>
+              <p className="mt-0.5">
+                <span className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full ${ORDER_TYPE_COLORS[order.orderType as OrderType] || ORDER_TYPE_COLORS.general}`}>
+                  {ORDER_TYPE_LABELS[order.orderType as OrderType] || order.orderType}
+                </span>
+              </p>
+            </div>
+            <div>
+              <span className="text-gray-500">受注日</span>
+              <p className="text-gray-900">{order.orderDate}</p>
+            </div>
+            <div>
+              <span className="text-gray-500">納品予定日</span>
+              <p className="text-gray-900">{order.deliveryDate || '—'}</p>
+            </div>
+          </div>
+
+          {/* Ledger Info (type-specific custom fields) */}
+          {order.orderType !== 'general' && order.customFields && (
+            <div>
+              <h4 className="text-sm font-medium text-gray-700 mb-2">台帳情報</h4>
+              <div className="grid grid-cols-2 gap-4 text-sm bg-gray-50 p-4 rounded-lg">
+                {order.orderType === 'repair' && (
+                  <div>
+                    <span className="text-gray-500">出張員</span>
+                    <p className="text-gray-900">{(order.customFields as RepairCustomFields).dispatchStaff || '—'}</p>
+                  </div>
+                )}
+                {order.orderType === 'machine' && (
+                  <>
+                    <div>
+                      <span className="text-gray-500">寸法</span>
+                      <p className="text-gray-900">{(order.customFields as MachineCustomFields).dimensions || '—'}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">外注先</span>
+                      <p className="text-gray-900">{(order.customFields as MachineCustomFields).subcontractor || '—'}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">完成日</span>
+                      <p className="text-gray-900">{(order.customFields as MachineCustomFields).completionDate || '—'}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">納品場所</span>
+                      <p className="text-gray-900">{(order.customFields as MachineCustomFields).deliveryLocation || '—'}</p>
+                    </div>
+                  </>
+                )}
+                {order.orderType === 'small_item' && (
+                  <div>
+                    <span className="text-gray-500">納入先</span>
+                    <p className="text-gray-900">{(order.customFields as SmallItemCustomFields).deliveryDestination || '—'}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Items table */}
+          <div className="border border-gray-200 rounded-lg overflow-hidden">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-200">
+                  <th className="text-left px-4 py-2 text-xs font-medium text-gray-500">#</th>
+                  <th className="text-left px-4 py-2 text-xs font-medium text-gray-500">商品名</th>
+                  <th className="text-right px-4 py-2 text-xs font-medium text-gray-500">数量</th>
+                  <th className="text-right px-4 py-2 text-xs font-medium text-gray-500">納品済数量</th>
+                  <th className="text-left px-4 py-2 text-xs font-medium text-gray-500">単位</th>
+                  <th className="text-right px-4 py-2 text-xs font-medium text-gray-500">単価</th>
+                  <th className="text-right px-4 py-2 text-xs font-medium text-gray-500">金額</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {order.items.map((item, index) => (
+                  <tr key={item.id} className={index % 2 === 1 ? 'bg-gray-50/50' : ''}>
+                    <td className="px-4 py-2 text-sm text-gray-400">{index + 1}</td>
+                    <td className="px-4 py-2 text-sm text-gray-900">
+                      {item.productName}
+                      {item.productCode && (
+                        <span className="ml-2 text-xs text-gray-400 font-mono">{item.productCode}</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-2 text-sm text-gray-900 text-right">{item.quantity}</td>
+                    <td className="px-4 py-2 text-sm text-right">
+                      <span className={item.deliveredQuantity >= item.quantity ? 'text-green-600 font-medium' : 'text-gray-900'}>
+                        {item.deliveredQuantity}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2 text-sm text-gray-500">{item.unit}</td>
+                    <td className="px-4 py-2 text-sm text-gray-900 text-right">{formatCurrency(item.unitPrice)}</td>
+                    <td className="px-4 py-2 text-sm text-gray-900 text-right font-medium">{formatCurrency(item.amount)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Totals */}
+          <div className="flex justify-end">
+            <div className="w-64 space-y-1 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-500">小計</span>
+                <span className="text-gray-900">{formatCurrency(order.subtotal)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">消費税</span>
+                <span className="text-gray-900">{formatCurrency(order.taxAmount)}</span>
+              </div>
+              <div className="flex justify-between border-t border-gray-200 pt-1 font-semibold text-base">
+                <span className="text-gray-700">合計</span>
+                <span className="text-gray-900">{formatCurrency(order.totalAmount)}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Notes */}
+          {order.notes && (
+            <div>
+              <h4 className="text-sm font-medium text-gray-700 mb-1">備考</h4>
+              <p className="text-sm text-gray-600 whitespace-pre-wrap bg-gray-50 p-3 rounded-lg">{order.notes}</p>
+            </div>
+          )}
+
+          {order.internalMemo && (
+            <div>
+              <h4 className="text-sm font-medium text-gray-700 mb-1">社内メモ</h4>
+              <p className="text-sm text-gray-600 whitespace-pre-wrap bg-yellow-50 border border-yellow-100 p-3 rounded-lg">{order.internalMemo}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="flex justify-end px-6 py-4 border-t border-gray-200">
+          <button
+            onClick={onClose}
+            className="border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg px-4 py-2 text-sm"
+          >
+            閉じる
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

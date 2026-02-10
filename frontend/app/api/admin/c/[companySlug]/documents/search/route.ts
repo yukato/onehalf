@@ -3,6 +3,7 @@ import { verifyAccessToken } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { getAllChunksWithEmbeddings, getDocument } from '@/lib/documents/queries';
 import { generateEmbedding, cosineSimilarity } from '@/lib/documents/embeddings';
+import { getLlmSettingsRaw } from '@/lib/llm-settings/queries';
 
 async function authenticateAdmin(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
@@ -34,7 +35,8 @@ export async function GET(
       return NextResponse.json({ detail: 'Query parameter "q" is required' }, { status: 400 });
     }
 
-    const queryEmbedding = await generateEmbedding(query);
+    const llmSettings = await getLlmSettingsRaw(companySlug);
+    const queryEmbedding = await generateEmbedding(query, llmSettings.embeddingModel);
     const chunks = await getAllChunksWithEmbeddings(companySlug);
 
     const scored = chunks.map((chunk) => ({

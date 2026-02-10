@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { useParams } from 'next/navigation';
 import { companyApi } from '@/lib/company-api';
 import { ModuleHeader } from '@/components/modules/ModuleHeader';
 import { DocumentList } from '@/components/documents/DocumentList';
@@ -8,12 +9,16 @@ import { DocumentTagFilter } from '@/components/documents/DocumentTagFilter';
 import { DocumentTagManager } from '@/components/documents/DocumentTagManager';
 import { DocumentUploadModal } from '@/components/documents/DocumentUploadModal';
 import { DocumentSearchResults } from '@/components/documents/DocumentSearchResults';
+import { DocumentChat } from '@/components/documents/DocumentChat';
 import { SearchBox } from '@/components/ui/SearchBox';
 import type { DocumentItem, DocumentTag, DocumentSearchResult } from '@/types';
 
 const PAGE_SIZE = 50;
 
 export default function CompanyDocumentsPage() {
+  const params = useParams();
+  const companySlug = params.companySlug as string;
+
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [total, setTotal] = useState(0);
   const [offset, setOffset] = useState(0);
@@ -25,10 +30,13 @@ export default function CompanyDocumentsPage() {
   const [showTagManager, setShowTagManager] = useState(false);
   const [editingDoc, setEditingDoc] = useState<DocumentItem | null>(null);
 
+  const [activeTab, setActiveTab] = useState<'documents' | 'chat'>('documents');
+
   // Search
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<DocumentSearchResult[] | null>(null);
   const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
 
   const loadDocuments = useCallback(async (tagId?: string | null, newOffset?: number) => {
     try {
@@ -52,6 +60,16 @@ export default function CompanyDocumentsPage() {
       console.error('Failed to load tags:', err);
     }
   }, []);
+
+  // processing 状態のドキュメントがある間はポーリングで更新
+  useEffect(() => {
+    const hasProcessing = documents.some((d) => d.status === 'processing');
+    if (!hasProcessing) return;
+    const timer = setInterval(() => {
+      loadDocuments(selectedTagId, offset);
+    }, 3000);
+    return () => clearInterval(timer);
+  }, [documents, selectedTagId, offset, loadDocuments]);
 
   useEffect(() => {
     const init = async () => {
@@ -103,13 +121,17 @@ export default function CompanyDocumentsPage() {
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
       setSearchResults(null);
+      setSearchError(null);
       return;
     }
     setIsSearching(true);
+    setSearchError(null);
     try {
       const res = await companyApi.searchDocuments(searchQuery.trim());
       setSearchResults(res.results);
     } catch (err) {
+      const message = err instanceof Error ? err.message : '検索に失敗しました';
+      setSearchError(message);
       console.error('Search failed:', err);
     } finally {
       setIsSearching(false);
@@ -149,7 +171,7 @@ export default function CompanyDocumentsPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 ${activeTab === 'chat' ? 'w-full h-full flex flex-col' : ''}`}>
       <ModuleHeader
         moduleName="書類管理"
         icon="document"
@@ -166,6 +188,40 @@ export default function CompanyDocumentsPage() {
         }
       />
 
+      {/* Tabs */}
+      <div className="flex gap-0 border-b border-gray-200 mb-4">
+        <button
+          onClick={() => setActiveTab('documents')}
+          className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === 'documents'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          ドキュメント
+        </button>
+        <button
+          onClick={() => setActiveTab('chat')}
+          className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+            activeTab === 'chat'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+          </svg>
+          AIチャット
+        </button>
+      </div>
+
+      {activeTab === 'chat' ? (
+        <DocumentChat companySlug={companySlug} apiType="company" />
+      ) : (
+      <>
       {/* Search bar */}
       <SearchBox
         value={searchQuery}
@@ -173,8 +229,12 @@ export default function CompanyDocumentsPage() {
         onSubmit={handleSearch}
         placeholder="AI検索: 書類の内容を自然言語で検索..."
         isLoading={isSearching}
-        className="mb-4"
+        className="mb-1"
       />
+      {searchError && (
+        <p className="text-sm text-red-500 mb-4">{searchError}</p>
+      )}
+      <div className="mb-3" />
 
       {/* Search results or document list */}
       {searchResults !== null ? (
@@ -206,6 +266,8 @@ export default function CompanyDocumentsPage() {
             onEdit={handleEdit}
           />
         </>
+      )}
+      </>
       )}
 
       {/* Upload modal */}

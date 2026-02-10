@@ -245,11 +245,16 @@ async function seedCompanyModules() {
   console.log('Creating company modules...');
 
   const modules = [
+    { name: 'ダッシュボード', slug: 'analytics', description: 'データ分析・可視化ダッシュボード', icon: 'chart', sortOrder: 0 },
     { name: '人材検索', slug: 'talent-search', description: 'AIを活用した人材検索・マッチング機能', icon: 'search', sortOrder: 1 },
     { name: '書類管理', slug: 'documents', description: '契約書・請求書などの書類管理機能', icon: 'document', sortOrder: 2 },
-    { name: '分析ダッシュボード', slug: 'analytics', description: 'データ分析・可視化ダッシュボード', icon: 'chart', sortOrder: 3 },
     { name: 'レポート', slug: 'reports', description: '各種レポートの自動生成機能', icon: 'report', sortOrder: 4 },
     { name: 'メッセージ', slug: 'messages', description: '社内外メッセージ・通知機能', icon: 'mail', sortOrder: 5 },
+    { name: 'マスタ管理', slug: 'masters', description: '取引先・商品マスタの管理', icon: 'database', sortOrder: 10 },
+    { name: '見積管理', slug: 'quotations', description: '見積書の作成・管理・承認ワークフロー', icon: 'receipt', sortOrder: 20 },
+    { name: '受注管理', slug: 'orders', description: '受注・売上の管理', icon: 'chart', sortOrder: 30 },
+    { name: '納品書', slug: 'delivery-notes', description: '納品書の発行・管理', icon: 'truck', sortOrder: 40 },
+    { name: '請求管理', slug: 'invoices', description: '請求書の作成・入金管理', icon: 'money', sortOrder: 50 },
   ];
 
   const createdModules: Record<string, bigint> = {};
@@ -265,7 +270,7 @@ async function seedCompanyModules() {
   const daitora = await prisma.company.findFirst({ where: { slug: 'daitora' } });
 
   if (yagichu) {
-    const yagichuModules = ['talent-search', 'documents', 'analytics', 'messages'];
+    const yagichuModules = ['talent-search', 'documents', 'analytics', 'messages', 'masters', 'quotations', 'orders', 'delivery-notes', 'invoices'];
     for (const slug of yagichuModules) {
       await prisma.companyModuleAssignment.create({
         data: { companyId: yagichu.id, moduleId: createdModules[slug], isActive: true },

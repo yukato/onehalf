@@ -23,7 +23,7 @@ from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.starlette import StarletteIntegration
 
 from .config import get_settings
-from .routers import admin, auth, data, faq, improvements, internal, rules
+from .routers import admin, auth, data, embeddings, faq, improvements, internal, rules
 from .routers import settings as settings_router
 from .services.rag_chatbot import RAGChatbotService
 from .services.ticket_rag import TicketRAGService
@@ -147,6 +147,7 @@ app.include_router(internal.router)
 app.include_router(settings_router.router)
 app.include_router(data.router)
 app.include_router(rules.router)
+app.include_router(embeddings.router)
 
 
 @app.get("/")

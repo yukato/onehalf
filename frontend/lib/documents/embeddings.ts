@@ -1,29 +1,31 @@
-import OpenAI from 'openai';
+const EMBEDDING_API_URL = process.env.EMBEDDING_API_URL || 'http://localhost:8100/api/embeddings';
+const BATCH_SIZE = 100;
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-const MODEL = 'text-embedding-3-small';
-const BATCH_SIZE = 2048;
-
-export async function generateEmbeddings(texts: string[]): Promise<number[][]> {
+export async function generateEmbeddings(texts: string[], model?: string): Promise<number[][]> {
   const allEmbeddings: number[][] = [];
 
   for (let i = 0; i < texts.length; i += BATCH_SIZE) {
     const batch = texts.slice(i, i + BATCH_SIZE);
-    const response = await openai.embeddings.create({
-      model: MODEL,
-      input: batch,
+    const response = await fetch(EMBEDDING_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ texts: batch, model }),
     });
-    for (const item of response.data) {
-      allEmbeddings.push(item.embedding);
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Embedding API error: ${response.status} ${error}`);
     }
+
+    const data = await response.json();
+    allEmbeddings.push(...data.embeddings);
   }
 
   return allEmbeddings;
 }
 
-export async function generateEmbedding(text: string): Promise<number[]> {
-  const [embedding] = await generateEmbeddings([text]);
+export async function generateEmbedding(text: string, model?: string): Promise<number[]> {
+  const [embedding] = await generateEmbeddings([text], model);
   return embedding;
 }
 

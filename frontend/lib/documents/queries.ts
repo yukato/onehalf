@@ -90,7 +90,7 @@ export async function listDocuments(companySlug: string, opts: ListDocumentsOpti
 
   const [rows] = await p.execute<DocumentRow[]>(
     `SELECT d.* FROM documents d WHERE ${where} ORDER BY d.created_at DESC LIMIT ? OFFSET ?`,
-    [...params, limit, offset]
+    [...params, String(limit), String(offset)]
   );
 
   const docIds = rows.map((r) => r.id);
@@ -353,5 +353,30 @@ export async function getAllChunksWithEmbeddings(companySlug: string) {
     chunkIndex: r.chunk_index,
     tokenCount: r.token_count,
     embedding: r.embedding as number[],
+  }));
+}
+
+// ---------- Reprocess ----------
+
+export async function reprocessAllDocuments(companySlug: string) {
+  const p = await pool(companySlug);
+
+  // 1. Delete all chunks
+  await p.execute('DELETE FROM document_chunks');
+
+  // 2. Get all ready documents
+  const [rows] = await p.execute<DocumentRow[]>(
+    "SELECT id, s3_path, mime_type FROM documents WHERE status = 'ready'"
+  );
+
+  // 3. Set all documents to processing
+  if (rows.length > 0) {
+    await p.execute("UPDATE documents SET status = 'processing' WHERE status = 'ready'");
+  }
+
+  return rows.map((r) => ({
+    id: r.id.toString(),
+    s3Path: r.s3_path,
+    mimeType: r.mime_type,
   }));
 }

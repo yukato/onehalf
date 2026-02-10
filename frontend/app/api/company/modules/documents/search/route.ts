@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyCompanyAccessToken } from '@/lib/company-auth';
 import { getAllChunksWithEmbeddings, getDocument } from '@/lib/documents/queries';
 import { generateEmbedding, cosineSimilarity } from '@/lib/documents/embeddings';
+import { getLlmSettingsRaw } from '@/lib/llm-settings/queries';
 
 async function authenticateCompany(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
@@ -24,8 +25,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ detail: 'Query parameter "q" is required' }, { status: 400 });
     }
 
-    // クエリの埋め込み生成
-    const queryEmbedding = await generateEmbedding(query);
+    // クエリの埋め込み生成（Pythonバックエンドのローカルモデルを使用）
+    const llmSettings = await getLlmSettingsRaw(payload.companySlug);
+    const queryEmbedding = await generateEmbedding(query, llmSettings.embeddingModel);
 
     // 全チャンクを取得してコサイン類似度計算
     const chunks = await getAllChunksWithEmbeddings(payload.companySlug);

@@ -7,6 +7,7 @@ interface SearchBoxProps {
   onClear?: () => void;
   placeholder?: string;
   isLoading?: boolean;
+  disabled?: boolean;
   submitLabel?: string;
   loadingLabel?: string;
   className?: string;
@@ -20,6 +21,7 @@ export function SearchBox({
   onClear,
   placeholder = '検索...',
   isLoading = false,
+  disabled = false,
   submitLabel = '検索',
   loadingLabel = '検索中...',
   className,
@@ -31,7 +33,7 @@ export function SearchBox({
   };
 
   return (
-    <form onSubmit={handleSubmit} className={className}>
+    <form onSubmit={handleSubmit} className={`${className ?? ''}${disabled ? ' opacity-50 cursor-not-allowed' : ''}`}>
       <div className="relative">
         <svg
           className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
@@ -51,13 +53,15 @@ export function SearchBox({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className="w-full pl-10 pr-24 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light"
+          disabled={disabled}
+          className="w-full pl-10 pr-24 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cloud-light/50 focus:border-cloud-light disabled:cursor-not-allowed"
         />
         <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
           {showClear && onClear && (
             <button
               type="button"
               onClick={onClear}
+              disabled={disabled}
               className="px-2 py-1.5 text-gray-400 text-sm hover:text-gray-600 transition-colors"
             >
               クリア
@@ -65,7 +69,7 @@ export function SearchBox({
           )}
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || disabled}
             className="px-3 py-1.5 bg-gray-100 text-gray-600 text-sm rounded-md hover:bg-gray-200 disabled:opacity-50 transition-colors"
           >
             {isLoading ? loadingLabel : submitLabel}
