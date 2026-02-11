@@ -9,7 +9,6 @@ import type { AdminUser, SidebarCompany } from '@/types';
 
 export type PageType =
   | 'dashboard'
-  | 'faq'
   | 'internal'
   | 'improvements'
   | 'history'
@@ -17,10 +16,6 @@ export type PageType =
   | 'admin-users'
   | 'companies'
   | 'modules'
-  | 'black-users'
-  | 'black-matchings'
-  | 'black-interviews'
-  | 'black-venues'
   | 'other';
 
 interface SidebarProps {
@@ -123,34 +118,6 @@ export function Sidebar({ currentPage, currentPath, currentUser, onLogout }: Sid
           </div>
         )}
         <ul className="space-y-1 font-medium">
-          {/* FAQ チャット */}
-          <li>
-            <Link
-              href="/admin/cs/faq"
-              className={`flex items-center px-2 py-2 text-sm rounded-lg transition-colors group ${
-                currentPage === 'faq'
-                  ? 'bg-gray-100 text-gray-900 font-medium'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-              } ${collapsed ? 'justify-center' : ''}`}
-              title={collapsed ? 'FAQ チャット' : undefined}
-            >
-              <svg
-                className="w-5 h-5 text-gray-400 transition duration-75 group-hover:text-gray-600 flex-shrink-0"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              {!collapsed && <span className="ms-3">FAQ チャット</span>}
-            </Link>
-          </li>
-
           {/* 内部サポート */}
           <li>
             <Link
@@ -204,129 +171,6 @@ export function Sidebar({ currentPage, currentPath, currentUser, onLogout }: Sid
                 />
               </svg>
               {!collapsed && <span className="ms-3">ナレッジ改善</span>}
-            </Link>
-          </li>
-        </ul>
-
-        {/* Black向け機能 */}
-        <div className={`my-3 ${collapsed ? 'mx-2' : ''}`}>
-          <div className="border-t border-gray-200" />
-        </div>
-        {!collapsed && (
-          <div className="px-2 py-1 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-            Black
-          </div>
-        )}
-        <ul className="space-y-1 font-medium">
-          {/* ユーザー */}
-          <li>
-            <Link
-              href="/admin/black/users"
-              className={`flex items-center px-2 py-2 text-sm rounded-lg transition-colors group ${
-                currentPage === 'black-users'
-                  ? 'bg-gray-100 text-gray-900 font-medium'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-              } ${collapsed ? 'justify-center' : ''}`}
-              title={collapsed ? 'ユーザー' : undefined}
-            >
-              <svg
-                className="w-5 h-5 text-gray-400 transition duration-75 group-hover:text-gray-600 flex-shrink-0"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                />
-              </svg>
-              {!collapsed && <span className="ms-3">ユーザー</span>}
-            </Link>
-          </li>
-
-          {/* マッチング */}
-          <li>
-            <Link
-              href="/admin/black/matchings"
-              className={`flex items-center px-2 py-2 text-sm rounded-lg transition-colors group ${
-                currentPage === 'black-matchings'
-                  ? 'bg-gray-100 text-gray-900 font-medium'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-              } ${collapsed ? 'justify-center' : ''}`}
-              title={collapsed ? 'マッチング' : undefined}
-            >
-              <svg
-                className="w-5 h-5 text-gray-400 transition duration-75 group-hover:text-gray-600 flex-shrink-0"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                />
-              </svg>
-              {!collapsed && <span className="ms-3">マッチング</span>}
-            </Link>
-          </li>
-
-          {/* 面談 */}
-          <li>
-            <Link
-              href="/admin/black/interviews"
-              className={`flex items-center px-2 py-2 text-sm rounded-lg transition-colors group ${
-                currentPage === 'black-interviews'
-                  ? 'bg-gray-100 text-gray-900 font-medium'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-              } ${collapsed ? 'justify-center' : ''}`}
-              title={collapsed ? '面談' : undefined}
-            >
-              <svg
-                className="w-5 h-5 text-gray-400 transition duration-75 group-hover:text-gray-600 flex-shrink-0"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-                />
-              </svg>
-              {!collapsed && <span className="ms-3">面談</span>}
-            </Link>
-          </li>
-
-          {/* レストラン */}
-          <li>
-            <Link
-              href="/admin/black/venues"
-              className={`flex items-center px-2 py-2 text-sm rounded-lg transition-colors group ${
-                currentPage === 'black-venues'
-                  ? 'bg-gray-100 text-gray-900 font-medium'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-              } ${collapsed ? 'justify-center' : ''}`}
-              title={collapsed ? 'レストラン' : undefined}
-            >
-              <svg
-                className="w-5 h-5 text-gray-400 transition duration-75 group-hover:text-gray-600 flex-shrink-0"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                />
-              </svg>
-              {!collapsed && <span className="ms-3">レストラン</span>}
             </Link>
           </li>
         </ul>

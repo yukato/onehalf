@@ -9,22 +9,6 @@ import type { DataStatusResponse, DataSourceStatus, AdminUser } from '@/types';
 
 const FEATURE_CARDS = [
   {
-    title: 'FAQ チャット',
-    description: 'よくある質問からお問い合わせ対応を検索',
-    href: '/admin/cs/faq',
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={1.5}
-          d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-        />
-      </svg>
-    ),
-    color: 'blue',
-  },
-  {
     title: '内部サポート',
     description: '過去の対応履歴から類似事例を検索',
     href: '/admin/cs/internal',
