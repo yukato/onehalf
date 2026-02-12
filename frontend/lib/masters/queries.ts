@@ -1,5 +1,5 @@
 import type { RowDataPacket, ResultSetHeader } from 'mysql2';
-import { getCompanyPool, ensureCompanyDatabase } from '@/lib/company-db';
+import { getCompanyPool, ensureCompanyDatabase, escapeLike } from '@/lib/company-db';
 
 // ---------- Row types ----------
 
@@ -88,24 +88,25 @@ export async function listCustomers(companySlug: string, opts: ListCustomersOpti
   }
   if (q) {
     where += ' AND (name LIKE ? OR code LIKE ? OR name_kana LIKE ?)';
-    const like = `%${q}%`;
+    const like = `%${escapeLike(q)}%`;
     params.push(like, like, like);
   }
 
-  const [countRows] = await p.execute<CountRow[]>(
-    `SELECT COUNT(*) AS total FROM customers WHERE ${where}`,
-    params
-  );
-  const total = countRows[0]?.total ?? 0;
-
-  const [rows] = await p.execute<CustomerRow[]>(
-    `SELECT * FROM customers WHERE ${where} ORDER BY code ASC LIMIT ? OFFSET ?`,
-    [...params, String(limit), String(offset)]
-  );
+  // Run count and data queries in parallel
+  const [countResult, dataResult] = await Promise.all([
+    p.execute<CountRow[]>(
+      `SELECT COUNT(*) AS total FROM customers WHERE ${where}`,
+      params
+    ),
+    p.execute<CustomerRow[]>(
+      `SELECT * FROM customers WHERE ${where} ORDER BY code ASC LIMIT ? OFFSET ?`,
+      [...params, String(limit), String(offset)]
+    ),
+  ]);
 
   return {
-    customers: rows.map(formatCustomer),
-    total,
+    customers: dataResult[0].map(formatCustomer),
+    total: countResult[0][0]?.total ?? 0,
   };
 }
 
@@ -275,28 +276,29 @@ export async function listProducts(companySlug: string, opts: ListProductsOption
   }
   if (q) {
     where += ' AND (p.name LIKE ? OR p.code LIKE ? OR p.name_kana LIKE ?)';
-    const like = `%${q}%`;
+    const like = `%${escapeLike(q)}%`;
     params.push(like, like, like);
   }
 
-  const [countRows] = await p.execute<CountRow[]>(
-    `SELECT COUNT(*) AS total FROM products p WHERE ${where}`,
-    params
-  );
-  const total = countRows[0]?.total ?? 0;
-
-  const [rows] = await p.execute<ProductRow[]>(
-    `SELECT p.*, pc.name AS category_name, pc.slug AS category_slug, pc.sort_order AS category_sort_order
-     FROM products p
-     LEFT JOIN product_categories pc ON pc.id = p.category_id
-     WHERE ${where}
-     ORDER BY p.code ASC LIMIT ? OFFSET ?`,
-    [...params, String(limit), String(offset)]
-  );
+  // Run count and data queries in parallel
+  const [countResult, dataResult] = await Promise.all([
+    p.execute<CountRow[]>(
+      `SELECT COUNT(*) AS total FROM products p WHERE ${where}`,
+      params
+    ),
+    p.execute<ProductRow[]>(
+      `SELECT p.*, pc.name AS category_name, pc.slug AS category_slug, pc.sort_order AS category_sort_order
+       FROM products p
+       LEFT JOIN product_categories pc ON pc.id = p.category_id
+       WHERE ${where}
+       ORDER BY p.code ASC LIMIT ? OFFSET ?`,
+      [...params, String(limit), String(offset)]
+    ),
+  ]);
 
   return {
-    products: rows.map(formatProduct),
-    total,
+    products: dataResult[0].map(formatProduct),
+    total: countResult[0][0]?.total ?? 0,
   };
 }
 
@@ -399,44 +401,109 @@ function formatProduct(r: ProductRow) {
 
 // ---------- CSV Import ----------
 
+const VALID_CUSTOMER_TYPES = ['customer', 'supplier', 'both'];
+
 export async function importCustomersFromCsv(
   companySlug: string,
   rows: Record<string, string>[]
 ) {
   const p = await pool(companySlug);
+  const conn = await p.getConnection();
   let imported = 0;
   let skipped = 0;
   const errors: { row: number; message: string }[] = [];
 
-  for (let i = 0; i < rows.length; i++) {
-    const row = rows[i];
-    try {
+  try {
+    await conn.beginTransaction();
+
+    // Validate and collect valid rows
+    const validRows: { index: number; row: Record<string, string> }[] = [];
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
       if (!row.code || !row.name) {
         errors.push({ row: i + 1, message: 'code と name は必須です' });
         skipped++;
         continue;
       }
-      await p.execute<ResultSetHeader>(
-        `INSERT INTO customers (code, name, name_kana, customer_type, postal_code, address, phone, fax, email, contact_person, payment_terms, notes)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-         ON DUPLICATE KEY UPDATE name = VALUES(name), name_kana = VALUES(name_kana),
-         postal_code = VALUES(postal_code), address = VALUES(address), phone = VALUES(phone),
-         fax = VALUES(fax), email = VALUES(email), contact_person = VALUES(contact_person),
-         payment_terms = VALUES(payment_terms), notes = VALUES(notes)`,
-        [
+      if (row.code.length > 50) {
+        errors.push({ row: i + 1, message: 'code は50文字以内で入力してください' });
+        skipped++;
+        continue;
+      }
+      if (row.name.length > 255) {
+        errors.push({ row: i + 1, message: 'name は255文字以内で入力してください' });
+        skipped++;
+        continue;
+      }
+      if (row.customer_type && !VALID_CUSTOMER_TYPES.includes(row.customer_type)) {
+        errors.push({ row: i + 1, message: `customer_type は ${VALID_CUSTOMER_TYPES.join('/')} のいずれかを指定してください` });
+        skipped++;
+        continue;
+      }
+      validRows.push({ index: i, row });
+    }
+
+    // Batch INSERT in chunks of 100
+    const BATCH_SIZE = 100;
+    for (let b = 0; b < validRows.length; b += BATCH_SIZE) {
+      const batch = validRows.slice(b, b + BATCH_SIZE);
+      const placeholders = batch.map(() => '(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').join(', ');
+      const params: (string | null)[] = [];
+      for (const { row } of batch) {
+        params.push(
           row.code, row.name, row.name_kana || null,
           row.customer_type || 'customer',
           row.postal_code || null, row.address || null,
           row.phone || null, row.fax || null, row.email || null,
           row.contact_person || null, row.payment_terms || null, row.notes || null,
-        ]
-      );
-      imported++;
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      errors.push({ row: i + 1, message });
-      skipped++;
+        );
+      }
+      try {
+        await conn.execute<ResultSetHeader>(
+          `INSERT INTO customers (code, name, name_kana, customer_type, postal_code, address, phone, fax, email, contact_person, payment_terms, notes)
+           VALUES ${placeholders}
+           ON DUPLICATE KEY UPDATE name = VALUES(name), name_kana = VALUES(name_kana),
+           postal_code = VALUES(postal_code), address = VALUES(address), phone = VALUES(phone),
+           fax = VALUES(fax), email = VALUES(email), contact_person = VALUES(contact_person),
+           payment_terms = VALUES(payment_terms), notes = VALUES(notes)`,
+          params
+        );
+        imported += batch.length;
+      } catch {
+        // Batch failed - fall back to row-by-row to identify bad rows
+        for (const { index, row } of batch) {
+          try {
+            await conn.execute<ResultSetHeader>(
+              `INSERT INTO customers (code, name, name_kana, customer_type, postal_code, address, phone, fax, email, contact_person, payment_terms, notes)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+               ON DUPLICATE KEY UPDATE name = VALUES(name), name_kana = VALUES(name_kana),
+               postal_code = VALUES(postal_code), address = VALUES(address), phone = VALUES(phone),
+               fax = VALUES(fax), email = VALUES(email), contact_person = VALUES(contact_person),
+               payment_terms = VALUES(payment_terms), notes = VALUES(notes)`,
+              [
+                row.code, row.name, row.name_kana || null,
+                row.customer_type || 'customer',
+                row.postal_code || null, row.address || null,
+                row.phone || null, row.fax || null, row.email || null,
+                row.contact_person || null, row.payment_terms || null, row.notes || null,
+              ]
+            );
+            imported++;
+          } catch (rowErr: unknown) {
+            console.error(`CSV import customer row ${index + 1} error:`, rowErr);
+            errors.push({ row: index + 1, message: 'この行のインポートに失敗しました' });
+            skipped++;
+          }
+        }
+      }
     }
+
+    await conn.commit();
+  } catch (err) {
+    await conn.rollback();
+    throw err;
+  } finally {
+    conn.release();
   }
 
   return { imported, skipped, errors };
@@ -447,39 +514,97 @@ export async function importProductsFromCsv(
   rows: Record<string, string>[]
 ) {
   const p = await pool(companySlug);
+  const conn = await p.getConnection();
   let imported = 0;
   let skipped = 0;
   const errors: { row: number; message: string }[] = [];
 
-  for (let i = 0; i < rows.length; i++) {
-    const row = rows[i];
-    try {
+  try {
+    await conn.beginTransaction();
+
+    // Validate and collect valid rows
+    const validRows: { index: number; row: Record<string, string> }[] = [];
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
       if (!row.code || !row.name) {
         errors.push({ row: i + 1, message: 'code と name は必須です' });
         skipped++;
         continue;
       }
-      await p.execute<ResultSetHeader>(
-        `INSERT INTO products (code, name, name_kana, unit, unit_price, cost_price, tax_rate, description)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-         ON DUPLICATE KEY UPDATE name = VALUES(name), name_kana = VALUES(name_kana),
-         unit = VALUES(unit), unit_price = VALUES(unit_price), cost_price = VALUES(cost_price),
-         tax_rate = VALUES(tax_rate), description = VALUES(description)`,
-        [
+      if (row.code.length > 100) {
+        errors.push({ row: i + 1, message: 'code は100文字以内で入力してください' });
+        skipped++;
+        continue;
+      }
+      if (row.name.length > 500) {
+        errors.push({ row: i + 1, message: 'name は500文字以内で入力してください' });
+        skipped++;
+        continue;
+      }
+      validRows.push({ index: i, row });
+    }
+
+    // Batch INSERT in chunks of 100
+    const BATCH_SIZE = 100;
+    for (let b = 0; b < validRows.length; b += BATCH_SIZE) {
+      const batch = validRows.slice(b, b + BATCH_SIZE);
+      const placeholders = batch.map(() => '(?, ?, ?, ?, ?, ?, ?, ?)').join(', ');
+      const params: (string | number | null)[] = [];
+      for (const { row } of batch) {
+        params.push(
           row.code, row.name, row.name_kana || null,
           row.unit || '個',
           parseFloat(row.unit_price || '0'),
           parseFloat(row.cost_price || '0'),
           parseFloat(row.tax_rate || '10'),
           row.description || null,
-        ]
-      );
-      imported++;
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      errors.push({ row: i + 1, message });
-      skipped++;
+        );
+      }
+      try {
+        await conn.execute<ResultSetHeader>(
+          `INSERT INTO products (code, name, name_kana, unit, unit_price, cost_price, tax_rate, description)
+           VALUES ${placeholders}
+           ON DUPLICATE KEY UPDATE name = VALUES(name), name_kana = VALUES(name_kana),
+           unit = VALUES(unit), unit_price = VALUES(unit_price), cost_price = VALUES(cost_price),
+           tax_rate = VALUES(tax_rate), description = VALUES(description)`,
+          params
+        );
+        imported += batch.length;
+      } catch {
+        // Batch failed - fall back to row-by-row to identify bad rows
+        for (const { index, row } of batch) {
+          try {
+            await conn.execute<ResultSetHeader>(
+              `INSERT INTO products (code, name, name_kana, unit, unit_price, cost_price, tax_rate, description)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+               ON DUPLICATE KEY UPDATE name = VALUES(name), name_kana = VALUES(name_kana),
+               unit = VALUES(unit), unit_price = VALUES(unit_price), cost_price = VALUES(cost_price),
+               tax_rate = VALUES(tax_rate), description = VALUES(description)`,
+              [
+                row.code, row.name, row.name_kana || null,
+                row.unit || '個',
+                parseFloat(row.unit_price || '0'),
+                parseFloat(row.cost_price || '0'),
+                parseFloat(row.tax_rate || '10'),
+                row.description || null,
+              ]
+            );
+            imported++;
+          } catch (rowErr: unknown) {
+            console.error(`CSV import product row ${index + 1} error:`, rowErr);
+            errors.push({ row: index + 1, message: 'この行のインポートに失敗しました' });
+            skipped++;
+          }
+        }
+      }
     }
+
+    await conn.commit();
+  } catch (err) {
+    await conn.rollback();
+    throw err;
+  } finally {
+    conn.release();
   }
 
   return { imported, skipped, errors };

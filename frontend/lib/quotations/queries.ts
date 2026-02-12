@@ -1,5 +1,5 @@
 import type { RowDataPacket, ResultSetHeader } from 'mysql2';
-import { getCompanyPool, ensureCompanyDatabase } from '@/lib/company-db';
+import { getCompanyPool, ensureCompanyDatabase, escapeLike } from '@/lib/company-db';
 import { getNextNumber } from '@/lib/masters/queries';
 
 // ---------- Row types ----------
@@ -73,27 +73,29 @@ export async function listQuotations(companySlug: string, opts: ListQuotationsOp
   if (status) { where += ' AND q.status = ?'; params.push(status); }
   if (q) {
     where += ' AND (q.quotation_number LIKE ? OR q.subject LIKE ? OR c.name LIKE ?)';
-    const like = `%${q}%`;
+    const like = `%${escapeLike(q)}%`;
     params.push(like, like, like);
   }
 
-  const [countRows] = await p.execute<CountRow[]>(
-    `SELECT COUNT(*) AS total FROM quotations q LEFT JOIN customers c ON c.id = q.customer_id WHERE ${where}`,
-    params
-  );
-
-  const [rows] = await p.execute<QuotationRow[]>(
-    `SELECT q.*, c.name AS customer_name, c.code AS customer_code
-     FROM quotations q
-     LEFT JOIN customers c ON c.id = q.customer_id
-     WHERE ${where}
-     ORDER BY q.created_at DESC LIMIT ? OFFSET ?`,
-    [...params, String(limit), String(offset)]
-  );
+  // Run count and data queries in parallel
+  const [countResult, dataResult] = await Promise.all([
+    p.execute<CountRow[]>(
+      `SELECT COUNT(*) AS total FROM quotations q LEFT JOIN customers c ON c.id = q.customer_id WHERE ${where}`,
+      params
+    ),
+    p.execute<QuotationRow[]>(
+      `SELECT q.*, c.name AS customer_name, c.code AS customer_code
+       FROM quotations q
+       LEFT JOIN customers c ON c.id = q.customer_id
+       WHERE ${where}
+       ORDER BY q.created_at DESC LIMIT ? OFFSET ?`,
+      [...params, String(limit), String(offset)]
+    ),
+  ]);
 
   return {
-    quotations: rows.map(formatQuotation),
-    total: countRows[0]?.total ?? 0,
+    quotations: dataResult[0].map(formatQuotation),
+    total: countResult[0][0]?.total ?? 0,
   };
 }
 
@@ -177,16 +179,22 @@ export async function insertQuotation(
 
     const quotationId = result.insertId;
 
-    for (const item of itemsWithAmounts) {
+    // Batch INSERT all items in a single query
+    if (itemsWithAmounts.length > 0) {
+      const placeholders = itemsWithAmounts.map(() => '(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').join(', ');
+      const params: (string | number | null)[] = [];
+      for (const item of itemsWithAmounts) {
+        params.push(
+          quotationId.toString(), item.sortOrder, item.productId || null, item.productCode || null,
+          item.productName, item.quantity, item.unit || '個',
+          item.unitPrice, item.taxRate ?? 10, item.amount, item.notes || null,
+        );
+      }
       await conn.execute(
         `INSERT INTO quotation_items (quotation_id, sort_order, product_id, product_code, product_name,
          quantity, unit, unit_price, tax_rate, amount, notes)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          quotationId, item.sortOrder, item.productId || null, item.productCode || null,
-          item.productName, item.quantity, item.unit || '個',
-          item.unitPrice, item.taxRate ?? 10, item.amount, item.notes || null,
-        ]
+         VALUES ${placeholders}`,
+        params
       );
     }
 

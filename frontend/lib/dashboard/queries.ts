@@ -23,36 +23,37 @@ interface KpiRow extends RowDataPacket {
 export async function getDashboardSummary(companySlug: string) {
   const p = await pool(companySlug);
 
-  // Total sales (completed orders)
-  const [salesRows] = await p.execute<RowDataPacket[]>(
-    `SELECT
-       COALESCE(SUM(total_amount), 0) AS total_sales,
-       COUNT(*) AS order_count,
-       COALESCE(AVG(total_amount), 0) AS avg_order_amount
-     FROM orders WHERE status NOT IN ('cancelled')`
-  );
-
-  // Receivables (unpaid/partially paid invoices)
-  const [receivableRows] = await p.execute<RowDataPacket[]>(
-    `SELECT
-       COALESCE(SUM(i.total_amount - COALESCE(paid.total_paid, 0)), 0) AS receivable_amount,
-       COUNT(*) AS receivable_count
-     FROM invoices i
-     LEFT JOIN (SELECT invoice_id, SUM(amount) AS total_paid FROM payments GROUP BY invoice_id) paid
-       ON paid.invoice_id = i.id
-     WHERE i.status IN ('sent', 'partially_paid', 'overdue')`
-  );
-
-  // This month's sales
   const now = new Date();
   const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
-  const [monthRows] = await p.execute<RowDataPacket[]>(
-    `SELECT
-       COALESCE(SUM(total_amount), 0) AS monthly_sales,
-       COUNT(*) AS monthly_order_count
-     FROM orders WHERE status NOT IN ('cancelled') AND order_date >= ?`,
-    [monthStart]
-  );
+
+  // Run all 3 independent queries in parallel
+  const [salesRows, receivableRows, monthRows] = await Promise.all([
+    p.execute<RowDataPacket[]>(
+      `SELECT
+         COALESCE(SUM(total_amount), 0) AS total_sales,
+         COUNT(*) AS order_count,
+         COALESCE(AVG(total_amount), 0) AS avg_order_amount
+       FROM orders WHERE status NOT IN ('cancelled')`
+    ).then(([rows]) => rows),
+
+    p.execute<RowDataPacket[]>(
+      `SELECT
+         COALESCE(SUM(i.total_amount - COALESCE(paid.total_paid, 0)), 0) AS receivable_amount,
+         COUNT(*) AS receivable_count
+       FROM invoices i
+       LEFT JOIN (SELECT invoice_id, SUM(amount) AS total_paid FROM payments GROUP BY invoice_id) paid
+         ON paid.invoice_id = i.id
+       WHERE i.status IN ('sent', 'partially_paid', 'overdue')`
+    ).then(([rows]) => rows),
+
+    p.execute<RowDataPacket[]>(
+      `SELECT
+         COALESCE(SUM(total_amount), 0) AS monthly_sales,
+         COUNT(*) AS monthly_order_count
+       FROM orders WHERE status NOT IN ('cancelled') AND order_date >= ?`,
+      [monthStart]
+    ).then(([rows]) => rows),
+  ]);
 
   return {
     totalSales: parseFloat(salesRows[0]?.total_sales || '0'),
@@ -75,7 +76,10 @@ interface DailySalesRow extends RowDataPacket {
 
 export async function getDailySales(companySlug: string, year: number, month: number) {
   const p = await pool(companySlug);
-  const monthStr = `${year}-${String(month).padStart(2, '0')}`;
+  const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+  const nextMonth = month === 12 ? 1 : month + 1;
+  const nextYear = month === 12 ? year + 1 : year;
+  const endDate = `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`;
 
   const [rows] = await p.execute<DailySalesRow[]>(
     `SELECT
@@ -84,10 +88,10 @@ export async function getDailySales(companySlug: string, year: number, month: nu
        COUNT(*) AS count
      FROM orders
      WHERE status NOT IN ('cancelled')
-       AND order_date LIKE ?
+       AND order_date >= ? AND order_date < ?
      GROUP BY DATE_FORMAT(order_date, '%Y-%m-%d')
      ORDER BY date ASC`,
-    [`${monthStr}%`]
+    [startDate, endDate]
   );
 
   return rows.map(r => ({
@@ -107,6 +111,8 @@ interface MonthlySalesRow extends RowDataPacket {
 
 export async function getMonthlySales(companySlug: string, year: number) {
   const p = await pool(companySlug);
+  const startDate = `${year}-01-01`;
+  const endDate = `${year + 1}-01-01`;
 
   const [rows] = await p.execute<MonthlySalesRow[]>(
     `SELECT
@@ -115,10 +121,10 @@ export async function getMonthlySales(companySlug: string, year: number) {
        COUNT(*) AS count
      FROM orders
      WHERE status NOT IN ('cancelled')
-       AND YEAR(order_date) = ?
+       AND order_date >= ? AND order_date < ?
      GROUP BY DATE_FORMAT(order_date, '%Y-%m')
      ORDER BY month ASC`,
-    [String(year)]
+    [startDate, endDate]
   );
 
   return rows.map(r => ({

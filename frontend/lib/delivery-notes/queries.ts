@@ -1,5 +1,5 @@
 import type { RowDataPacket, ResultSetHeader } from 'mysql2';
-import { getCompanyPool, ensureCompanyDatabase } from '@/lib/company-db';
+import { getCompanyPool, ensureCompanyDatabase, escapeLike } from '@/lib/company-db';
 import { getNextNumber } from '@/lib/masters/queries';
 
 // ---------- Row types ----------
@@ -76,32 +76,34 @@ export async function listDeliveryNotes(companySlug: string, opts: ListDeliveryN
   if (status) { where += ' AND d.status = ?'; params.push(status); }
   if (q) {
     where += ' AND (d.delivery_number LIKE ? OR c.name LIKE ? OR o.order_number LIKE ?)';
-    const like = `%${q}%`;
+    const like = `%${escapeLike(q)}%`;
     params.push(like, like, like);
   }
 
-  const [countRows] = await p.execute<CountRow[]>(
-    `SELECT COUNT(*) AS total FROM delivery_notes d
-     LEFT JOIN customers c ON c.id = d.customer_id
-     LEFT JOIN orders o ON o.id = d.order_id
-     WHERE ${where}`,
-    params
-  );
-
-  const [rows] = await p.execute<DeliveryNoteRow[]>(
-    `SELECT d.*, c.name AS customer_name, c.code AS customer_code,
-            o.order_number, o.sales_number
-     FROM delivery_notes d
-     LEFT JOIN customers c ON c.id = d.customer_id
-     LEFT JOIN orders o ON o.id = d.order_id
-     WHERE ${where}
-     ORDER BY d.created_at DESC LIMIT ? OFFSET ?`,
-    [...params, String(limit), String(offset)]
-  );
+  // Run count and data queries in parallel
+  const [countResult, dataResult] = await Promise.all([
+    p.execute<CountRow[]>(
+      `SELECT COUNT(*) AS total FROM delivery_notes d
+       LEFT JOIN customers c ON c.id = d.customer_id
+       LEFT JOIN orders o ON o.id = d.order_id
+       WHERE ${where}`,
+      params
+    ),
+    p.execute<DeliveryNoteRow[]>(
+      `SELECT d.*, c.name AS customer_name, c.code AS customer_code,
+              o.order_number, o.sales_number
+       FROM delivery_notes d
+       LEFT JOIN customers c ON c.id = d.customer_id
+       LEFT JOIN orders o ON o.id = d.order_id
+       WHERE ${where}
+       ORDER BY d.created_at DESC LIMIT ? OFFSET ?`,
+      [...params, String(limit), String(offset)]
+    ),
+  ]);
 
   return {
-    deliveryNotes: rows.map(formatDeliveryNote),
-    total: countRows[0]?.total ?? 0,
+    deliveryNotes: dataResult[0].map(formatDeliveryNote),
+    total: countResult[0][0]?.total ?? 0,
   };
 }
 
@@ -189,25 +191,42 @@ export async function createDeliveryNoteFromOrder(
     );
 
     const deliveryNoteId = result.insertId;
+    // itemsData is already filtered (line 178) — cast for TypeScript narrowing
+    const validItems = itemsData as NonNullable<typeof itemsData[number]>[];
 
-    for (const item of itemsData) {
-      if (!item) continue;
-      await conn.execute(
-        `INSERT INTO delivery_note_items (delivery_note_id, order_item_id, sort_order,
-         product_id, product_code, product_name, quantity, unit, unit_price, tax_rate, amount)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          deliveryNoteId, item.orderItemId, item.sortOrder,
+    // Batch INSERT all delivery note items in a single query
+    if (validItems.length > 0) {
+      const placeholders = validItems.map(() => '(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').join(', ');
+      const params: (string | number | null)[] = [];
+      for (const item of validItems) {
+        params.push(
+          deliveryNoteId.toString(), item.orderItemId, item.sortOrder,
           item.productId || null, item.productCode || null,
           item.productName, item.quantity, item.unit,
           item.unitPrice, item.taxRate, item.amount,
-        ]
+        );
+      }
+      await conn.execute(
+        `INSERT INTO delivery_note_items (delivery_note_id, order_item_id, sort_order,
+         product_id, product_code, product_name, quantity, unit, unit_price, tax_rate, amount)
+         VALUES ${placeholders}`,
+        params
       );
 
-      // Update delivered_quantity on order_items
+      // Batch UPDATE delivered_quantity using CASE expression
+      // Note: CASE WHEN ids and WHERE IN ids are derived from the same validItems array
+      const caseWhen = validItems.map(() => 'WHEN id = ? THEN delivered_quantity + ?').join(' ');
+      const updateIds = validItems.map(() => '?').join(',');
+      const updateParams: (string | number)[] = [];
+      for (const item of validItems) {
+        updateParams.push(item.orderItemId, item.quantity);
+      }
+      for (const item of validItems) {
+        updateParams.push(item.orderItemId);
+      }
       await conn.execute(
-        'UPDATE order_items SET delivered_quantity = delivered_quantity + ? WHERE id = ?',
-        [item.quantity, item.orderItemId]
+        `UPDATE order_items SET delivered_quantity = CASE ${caseWhen} ELSE delivered_quantity END WHERE id IN (${updateIds})`,
+        updateParams
       );
     }
 

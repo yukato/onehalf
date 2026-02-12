@@ -82,16 +82,20 @@ export async function listDocuments(companySlug: string, opts: ListDocumentsOpti
     params.push(status);
   }
 
-  const [countRows] = await p.execute<CountRow[]>(
-    `SELECT COUNT(DISTINCT d.id) AS total FROM documents d WHERE ${where}`,
-    params
-  );
-  const total = countRows[0]?.total ?? 0;
+  // Run count and data queries in parallel
+  const [countResult, dataResult] = await Promise.all([
+    p.execute<CountRow[]>(
+      `SELECT COUNT(DISTINCT d.id) AS total FROM documents d WHERE ${where}`,
+      params
+    ),
+    p.execute<DocumentRow[]>(
+      `SELECT d.* FROM documents d WHERE ${where} ORDER BY d.created_at DESC LIMIT ? OFFSET ?`,
+      [...params, String(limit), String(offset)]
+    ),
+  ]);
 
-  const [rows] = await p.execute<DocumentRow[]>(
-    `SELECT d.* FROM documents d WHERE ${where} ORDER BY d.created_at DESC LIMIT ? OFFSET ?`,
-    [...params, String(limit), String(offset)]
-  );
+  const total = countResult[0][0]?.total ?? 0;
+  const rows = dataResult[0];
 
   const docIds = rows.map((r) => r.id);
   let tagsByDocId: Map<string, TagAssignmentRow[]> = new Map();
@@ -217,10 +221,15 @@ export async function updateDocument(
 
   if (data.tagIds !== undefined) {
     await p.execute('DELETE FROM document_tag_assignments WHERE document_id = ?', [id]);
-    for (const tagId of data.tagIds) {
+    if (data.tagIds.length > 0) {
+      const placeholders = data.tagIds.map(() => '(?, ?)').join(', ');
+      const params: string[] = [];
+      for (const tagId of data.tagIds) {
+        params.push(id, tagId);
+      }
       await p.execute(
-        'INSERT INTO document_tag_assignments (document_id, tag_id) VALUES (?, ?)',
-        [id, tagId]
+        `INSERT INTO document_tag_assignments (document_id, tag_id) VALUES ${placeholders}`,
+        params
       );
     }
   }
@@ -311,13 +320,35 @@ export async function insertChunks(
   documentId: string,
   chunks: { content: string; chunkIndex: number; tokenCount: number; embedding: number[] }[]
 ) {
+  if (chunks.length === 0) return;
   const p = await pool(companySlug);
-  for (const chunk of chunks) {
-    await p.execute(
-      `INSERT INTO document_chunks (document_id, content, chunk_index, token_count, embedding)
-       VALUES (?, ?, ?, ?, ?)`,
-      [documentId, chunk.content, chunk.chunkIndex, chunk.tokenCount, JSON.stringify(chunk.embedding)]
-    );
+  const conn = await p.getConnection();
+
+  try {
+    await conn.beginTransaction();
+
+    // Batch INSERT: build multi-row VALUES clause (batches of 50 to avoid packet size limits)
+    const BATCH_SIZE = 50;
+    for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
+      const batch = chunks.slice(i, i + BATCH_SIZE);
+      const placeholders = batch.map(() => '(?, ?, ?, ?, ?)').join(', ');
+      const params: (string | number)[] = [];
+      for (const chunk of batch) {
+        params.push(documentId, chunk.content, chunk.chunkIndex, chunk.tokenCount, JSON.stringify(chunk.embedding));
+      }
+      await conn.execute(
+        `INSERT INTO document_chunks (document_id, content, chunk_index, token_count, embedding)
+         VALUES ${placeholders}`,
+        params
+      );
+    }
+
+    await conn.commit();
+  } catch (err) {
+    await conn.rollback();
+    throw err;
+  } finally {
+    conn.release();
   }
 }
 

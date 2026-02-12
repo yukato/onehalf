@@ -1,5 +1,5 @@
 import type { RowDataPacket, ResultSetHeader } from 'mysql2';
-import { getCompanyPool, ensureCompanyDatabase } from '@/lib/company-db';
+import { getCompanyPool, ensureCompanyDatabase, escapeLike } from '@/lib/company-db';
 import { getNextNumber } from '@/lib/masters/queries';
 
 // ---------- Row types ----------
@@ -79,27 +79,29 @@ export async function listOrders(companySlug: string, opts: ListOrdersOptions = 
   if (orderType) { where += ' AND o.order_type = ?'; params.push(orderType); }
   if (q) {
     where += ' AND (o.order_number LIKE ? OR o.sales_number LIKE ? OR c.name LIKE ?)';
-    const like = `%${q}%`;
+    const like = `%${escapeLike(q)}%`;
     params.push(like, like, like);
   }
 
-  const [countRows] = await p.execute<CountRow[]>(
-    `SELECT COUNT(*) AS total FROM orders o LEFT JOIN customers c ON c.id = o.customer_id WHERE ${where}`,
-    params
-  );
-
-  const [rows] = await p.execute<OrderRow[]>(
-    `SELECT o.*, c.name AS customer_name, c.code AS customer_code
-     FROM orders o
-     LEFT JOIN customers c ON c.id = o.customer_id
-     WHERE ${where}
-     ORDER BY o.created_at DESC LIMIT ? OFFSET ?`,
-    [...params, String(limit), String(offset)]
-  );
+  // Run count and data queries in parallel
+  const [countResult, dataResult] = await Promise.all([
+    p.execute<CountRow[]>(
+      `SELECT COUNT(*) AS total FROM orders o LEFT JOIN customers c ON c.id = o.customer_id WHERE ${where}`,
+      params
+    ),
+    p.execute<OrderRow[]>(
+      `SELECT o.*, c.name AS customer_name, c.code AS customer_code
+       FROM orders o
+       LEFT JOIN customers c ON c.id = o.customer_id
+       WHERE ${where}
+       ORDER BY o.created_at DESC LIMIT ? OFFSET ?`,
+      [...params, String(limit), String(offset)]
+    ),
+  ]);
 
   return {
-    orders: rows.map(formatOrder),
-    total: countRows[0]?.total ?? 0,
+    orders: dataResult[0].map(formatOrder),
+    total: countResult[0][0]?.total ?? 0,
   };
 }
 
@@ -186,16 +188,22 @@ export async function insertOrder(
 
     const orderId = result.insertId;
 
-    for (const item of itemsWithAmounts) {
+    // Batch INSERT all items in a single query
+    if (itemsWithAmounts.length > 0) {
+      const placeholders = itemsWithAmounts.map(() => '(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').join(', ');
+      const params: (string | number | null)[] = [];
+      for (const item of itemsWithAmounts) {
+        params.push(
+          orderId.toString(), item.sortOrder, item.productId || null, item.productCode || null,
+          item.productName, item.quantity, item.unit || '個',
+          item.unitPrice, item.taxRate ?? 10, item.amount, item.notes || null,
+        );
+      }
       await conn.execute(
         `INSERT INTO order_items (order_id, sort_order, product_id, product_code, product_name,
          quantity, unit, unit_price, tax_rate, amount, notes)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          orderId, item.sortOrder, item.productId || null, item.productCode || null,
-          item.productName, item.quantity, item.unit || '個',
-          item.unitPrice, item.taxRate ?? 10, item.amount, item.notes || null,
-        ]
+         VALUES ${placeholders}`,
+        params
       );
     }
 

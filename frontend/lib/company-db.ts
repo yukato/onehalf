@@ -8,7 +8,15 @@ const DB_PASSWORD = process.env.DB_PASSWORD || '';
 const pools: Map<string, mysql.Pool> = new Map();
 
 export function getCompanyDbName(companySlug: string): string {
+  if (!/^[a-z0-9][a-z0-9-]*$/.test(companySlug)) {
+    throw new Error(`Invalid company slug: ${companySlug}`);
+  }
   return `onehalf_${companySlug}`;
+}
+
+/** LIKE句のワイルドカード文字をエスケープ */
+export function escapeLike(value: string): string {
+  return value.replace(/%/g, '\\%').replace(/_/g, '\\_');
 }
 
 export function getCompanyPool(companySlug: string): mysql.Pool {
@@ -22,7 +30,7 @@ export function getCompanyPool(companySlug: string): mysql.Pool {
     password: DB_PASSWORD || undefined,
     database: getCompanyDbName(companySlug),
     waitForConnections: true,
-    connectionLimit: 5,
+    connectionLimit: 10,
     queueLimit: 0,
   });
 
@@ -481,5 +489,11 @@ const TABLE_DEFINITIONS = [
     INDEX idx_analysis_type (analysis_type),
     INDEX idx_expires_at (expires_at)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+
+  // ========== パフォーマンス改善: 一覧のフィルタ+ソート用 複合インデックス追加 ==========
+  `ALTER TABLE quotations ADD INDEX idx_status_created (status, created_at)`,
+  `ALTER TABLE orders ADD INDEX idx_status_created (status, created_at)`,
+  `ALTER TABLE delivery_notes ADD INDEX idx_status_created (status, created_at)`,
+  `ALTER TABLE invoices ADD INDEX idx_status_created (status, created_at)`,
 ];
 

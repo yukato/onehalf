@@ -1,5 +1,5 @@
 import type { RowDataPacket, ResultSetHeader } from 'mysql2';
-import { getCompanyPool, ensureCompanyDatabase } from '@/lib/company-db';
+import { getCompanyPool, ensureCompanyDatabase, escapeLike } from '@/lib/company-db';
 import { getNextNumber } from '@/lib/masters/queries';
 
 // ---------- Row types ----------
@@ -87,58 +87,66 @@ export async function listInvoices(companySlug: string, opts: ListInvoicesOption
   if (status) { where += ' AND i.status = ?'; params.push(status); }
   if (q) {
     where += ' AND (i.invoice_number LIKE ? OR c.name LIKE ?)';
-    const like = `%${q}%`;
+    const like = `%${escapeLike(q)}%`;
     params.push(like, like);
   }
 
-  const [countRows] = await p.execute<CountRow[]>(
-    `SELECT COUNT(*) AS total FROM invoices i LEFT JOIN customers c ON c.id = i.customer_id WHERE ${where}`,
-    params
-  );
-
-  const [rows] = await p.execute<InvoiceRow[]>(
-    `SELECT i.*, c.name AS customer_name, c.code AS customer_code,
-            COALESCE((SELECT SUM(p.amount) FROM payments p WHERE p.invoice_id = i.id), 0) AS paid_amount
-     FROM invoices i
-     LEFT JOIN customers c ON c.id = i.customer_id
-     WHERE ${where}
-     ORDER BY i.created_at DESC LIMIT ? OFFSET ?`,
-    [...params, String(limit), String(offset)]
-  );
+  // Run count and data queries in parallel
+  // Note: paid_amount uses LEFT JOIN subquery instead of correlated subquery for better performance
+  const [countResult, dataResult] = await Promise.all([
+    p.execute<CountRow[]>(
+      `SELECT COUNT(*) AS total FROM invoices i LEFT JOIN customers c ON c.id = i.customer_id WHERE ${where}`,
+      params
+    ),
+    p.execute<InvoiceRow[]>(
+      `SELECT i.*, c.name AS customer_name, c.code AS customer_code,
+              COALESCE(paid.total_paid, 0) AS paid_amount
+       FROM invoices i
+       LEFT JOIN customers c ON c.id = i.customer_id
+       LEFT JOIN (SELECT invoice_id, SUM(amount) AS total_paid FROM payments GROUP BY invoice_id) paid
+         ON paid.invoice_id = i.id
+       WHERE ${where}
+       ORDER BY i.created_at DESC LIMIT ? OFFSET ?`,
+      [...params, String(limit), String(offset)]
+    ),
+  ]);
 
   return {
-    invoices: rows.map(formatInvoice),
-    total: countRows[0]?.total ?? 0,
+    invoices: dataResult[0].map(formatInvoice),
+    total: countResult[0][0]?.total ?? 0,
   };
 }
 
 export async function getInvoice(companySlug: string, id: string) {
   const p = await pool(companySlug);
 
-  const [rows] = await p.execute<InvoiceRow[]>(
-    `SELECT i.*, c.name AS customer_name, c.code AS customer_code,
-            COALESCE((SELECT SUM(p.amount) FROM payments p WHERE p.invoice_id = i.id), 0) AS paid_amount
-     FROM invoices i
-     LEFT JOIN customers c ON c.id = i.customer_id
-     WHERE i.id = ?`,
-    [id]
-  );
+  // Run all 3 queries in parallel
+  const [invoiceResult, itemsResult, paymentsResult] = await Promise.all([
+    p.execute<InvoiceRow[]>(
+      `SELECT i.*, c.name AS customer_name, c.code AS customer_code,
+              COALESCE((SELECT SUM(p.amount) FROM payments p WHERE p.invoice_id = i.id), 0) AS paid_amount
+       FROM invoices i
+       LEFT JOIN customers c ON c.id = i.customer_id
+       WHERE i.id = ?`,
+      [id]
+    ),
+    p.execute<InvoiceItemRow[]>(
+      'SELECT * FROM invoice_items WHERE invoice_id = ? ORDER BY sort_order ASC',
+      [id]
+    ),
+    p.execute<PaymentRow[]>(
+      'SELECT * FROM payments WHERE invoice_id = ? ORDER BY payment_date DESC',
+      [id]
+    ),
+  ]);
+
+  const rows = invoiceResult[0];
   if (rows.length === 0) return null;
-
-  const [items] = await p.execute<InvoiceItemRow[]>(
-    'SELECT * FROM invoice_items WHERE invoice_id = ? ORDER BY sort_order ASC',
-    [id]
-  );
-
-  const [payments] = await p.execute<PaymentRow[]>(
-    'SELECT * FROM payments WHERE invoice_id = ? ORDER BY payment_date DESC',
-    [id]
-  );
 
   return {
     ...formatInvoice(rows[0]),
-    items: items.map(formatInvoiceItem),
-    payments: payments.map(formatPayment),
+    items: itemsResult[0].map(formatInvoiceItem),
+    payments: paymentsResult[0].map(formatPayment),
   };
 }
 
@@ -198,16 +206,22 @@ export async function insertInvoice(
 
     const invoiceId = result.insertId;
 
-    for (const item of itemsWithAmounts) {
+    // Batch INSERT all items in a single query
+    if (itemsWithAmounts.length > 0) {
+      const placeholders = itemsWithAmounts.map(() => '(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').join(', ');
+      const params: (string | number | null)[] = [];
+      for (const item of itemsWithAmounts) {
+        params.push(
+          invoiceId.toString(), item.deliveryNoteId || null, item.orderId || null,
+          item.sortOrder, item.description, item.quantity, item.unit || '式',
+          item.unitPrice, item.taxRate ?? 10, item.amount, item.notes || null,
+        );
+      }
       await conn.execute(
         `INSERT INTO invoice_items (invoice_id, delivery_note_id, order_id, sort_order,
          description, quantity, unit, unit_price, tax_rate, amount, notes)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          invoiceId, item.deliveryNoteId || null, item.orderId || null,
-          item.sortOrder, item.description, item.quantity, item.unit || '式',
-          item.unitPrice, item.taxRate ?? 10, item.amount, item.notes || null,
-        ]
+         VALUES ${placeholders}`,
+        params
       );
     }
 
@@ -230,10 +244,19 @@ export async function createInvoiceFromDeliveryNotes(
   createdBy: string,
   createdByName: string
 ) {
-  const p = await pool(companySlug);
-  const { listDeliveryNotes } = await import('@/lib/delivery-notes/queries');
+  const { getDeliveryNote } = await import('@/lib/delivery-notes/queries');
 
-  // Get delivery notes for this customer that are confirmed
+  // Fetch delivery notes in parallel batches (limit concurrency to avoid pool exhaustion)
+  const CONCURRENCY = 5;
+  const deliveryNotes: (Awaited<ReturnType<typeof getDeliveryNote>>)[] = [];
+  for (let i = 0; i < deliveryNoteIds.length; i += CONCURRENCY) {
+    const batch = deliveryNoteIds.slice(i, i + CONCURRENCY);
+    const results = await Promise.all(
+      batch.map(dnId => getDeliveryNote(companySlug, dnId))
+    );
+    deliveryNotes.push(...results);
+  }
+
   const items: {
     deliveryNoteId: string;
     orderId?: string;
@@ -244,14 +267,13 @@ export async function createInvoiceFromDeliveryNotes(
     taxRate: number;
   }[] = [];
 
-  for (const dnId of deliveryNoteIds) {
-    const { getDeliveryNote } = await import('@/lib/delivery-notes/queries');
-    const dn = await getDeliveryNote(companySlug, dnId);
+  for (let i = 0; i < deliveryNoteIds.length; i++) {
+    const dn = deliveryNotes[i];
     if (!dn) continue;
 
     for (const item of dn.items) {
       items.push({
-        deliveryNoteId: dnId,
+        deliveryNoteId: deliveryNoteIds[i],
         orderId: dn.orderId,
         description: item.productName,
         quantity: item.quantity,

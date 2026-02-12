@@ -48,49 +48,49 @@ interface CacheRow extends RowDataPacket {
 export async function getSalesDataForAnalysis(companySlug: string) {
   const p = await pool(companySlug);
 
-  // Monthly sales totals (last 12 months)
-  const [monthlyRows] = await p.execute<MonthlySalesRow[]>(
-    `SELECT
-       DATE_FORMAT(order_date, '%Y-%m') AS month,
-       COALESCE(SUM(total_amount), 0) AS sales,
-       COUNT(*) AS order_count
-     FROM orders
-     WHERE status NOT IN ('cancelled')
-       AND order_date >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
-     GROUP BY DATE_FORMAT(order_date, '%Y-%m')
-     ORDER BY month ASC`
-  );
+  // Run all 3 independent queries in parallel
+  const [monthlyRows, customerRows, productRows] = await Promise.all([
+    p.execute<MonthlySalesRow[]>(
+      `SELECT
+         DATE_FORMAT(order_date, '%Y-%m') AS month,
+         COALESCE(SUM(total_amount), 0) AS sales,
+         COUNT(*) AS order_count
+       FROM orders
+       WHERE status NOT IN ('cancelled')
+         AND order_date >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
+       GROUP BY DATE_FORMAT(order_date, '%Y-%m')
+       ORDER BY month ASC`
+    ).then(([rows]) => rows),
 
-  // Top customers by revenue
-  const [customerRows] = await p.execute<TopCustomerRow[]>(
-    `SELECT
-       c.name AS customer_name, c.code AS customer_code,
-       SUM(o.total_amount) AS total_sales,
-       COUNT(*) AS order_count
-     FROM orders o
-     LEFT JOIN customers c ON c.id = o.customer_id
-     WHERE o.status NOT IN ('cancelled')
-       AND o.order_date >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
-     GROUP BY c.name, c.code
-     ORDER BY total_sales DESC
-     LIMIT 10`
-  );
+    p.execute<TopCustomerRow[]>(
+      `SELECT
+         c.name AS customer_name, c.code AS customer_code,
+         SUM(o.total_amount) AS total_sales,
+         COUNT(*) AS order_count
+       FROM orders o
+       LEFT JOIN customers c ON c.id = o.customer_id
+       WHERE o.status NOT IN ('cancelled')
+         AND o.order_date >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
+       GROUP BY c.name, c.code
+       ORDER BY total_sales DESC
+       LIMIT 10`
+    ).then(([rows]) => rows),
 
-  // Top products by quantity
-  const [productRows] = await p.execute<TopProductRow[]>(
-    `SELECT
-       oi.product_name, oi.product_code,
-       SUM(oi.amount) AS total_amount,
-       SUM(oi.quantity) AS total_quantity,
-       COUNT(DISTINCT oi.order_id) AS order_count
-     FROM order_items oi
-     JOIN orders o ON o.id = oi.order_id
-     WHERE o.status NOT IN ('cancelled')
-       AND o.order_date >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
-     GROUP BY oi.product_name, oi.product_code
-     ORDER BY total_amount DESC
-     LIMIT 10`
-  );
+    p.execute<TopProductRow[]>(
+      `SELECT
+         oi.product_name, oi.product_code,
+         SUM(oi.amount) AS total_amount,
+         SUM(oi.quantity) AS total_quantity,
+         COUNT(DISTINCT oi.order_id) AS order_count
+       FROM order_items oi
+       JOIN orders o ON o.id = oi.order_id
+       WHERE o.status NOT IN ('cancelled')
+         AND o.order_date >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
+       GROUP BY oi.product_name, oi.product_code
+       ORDER BY total_amount DESC
+       LIMIT 10`
+    ).then(([rows]) => rows),
+  ]);
 
   const monthly = monthlyRows.map(r => ({
     month: r.month,
