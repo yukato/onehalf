@@ -2,14 +2,15 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { companyApi } from '@/lib/company-api';
 import { ModuleHeader } from '@/components/modules/ModuleHeader';
 import { DocumentList } from '@/components/documents/DocumentList';
 import { DocumentTagFilter } from '@/components/documents/DocumentTagFilter';
 import { DocumentTagManager } from '@/components/documents/DocumentTagManager';
-import { DocumentUploadModal } from '@/components/documents/DocumentUploadModal';
+const DocumentUploadModal = dynamic(() => import('@/components/documents/DocumentUploadModal').then(m => m.DocumentUploadModal));
 import { DocumentSearchResults } from '@/components/documents/DocumentSearchResults';
-import { DocumentChat } from '@/components/documents/DocumentChat';
+const DocumentChat = dynamic(() => import('@/components/documents/DocumentChat').then(m => m.DocumentChat));
 import { SearchBox } from '@/components/ui/SearchBox';
 import type { DocumentItem, DocumentTag, DocumentSearchResult } from '@/types';
 

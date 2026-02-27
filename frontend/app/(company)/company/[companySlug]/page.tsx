@@ -3,11 +3,12 @@
 import { useParams } from 'next/navigation';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { companyApi } from '@/lib/company-api';
+import dynamic from 'next/dynamic';
 import { KpiCards } from '@/components/dashboard/KpiCards';
-import { SalesChart } from '@/components/dashboard/SalesChart';
+const SalesChart = dynamic(() => import('@/components/dashboard/SalesChart').then(m => m.SalesChart), { ssr: false });
 import { RankingTables } from '@/components/dashboard/RankingTables';
 import { RecentActivity } from '@/components/dashboard/RecentActivity';
-import { SuggestionsPanel } from '@/components/ai/SuggestionsPanel';
+const SuggestionsPanel = dynamic(() => import('@/components/ai/SuggestionsPanel').then(m => m.SuggestionsPanel));
 import type {
   DashboardSummary,
   DailySales,

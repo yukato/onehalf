@@ -4,12 +4,13 @@ import { useParams } from 'next/navigation';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { api } from '@/lib/api';
 import { ModuleHeader } from '@/components/modules/ModuleHeader';
+import dynamic from 'next/dynamic';
 import { KpiCards } from '@/components/dashboard/KpiCards';
-import { SalesChart } from '@/components/dashboard/SalesChart';
+const SalesChart = dynamic(() => import('@/components/dashboard/SalesChart').then(m => m.SalesChart), { ssr: false });
 import { RankingTables } from '@/components/dashboard/RankingTables';
 import { RecentActivity } from '@/components/dashboard/RecentActivity';
-import { AiInsights } from '@/components/dashboard/AiInsights';
-import { SuggestionsPanel } from '@/components/ai/SuggestionsPanel';
+const AiInsights = dynamic(() => import('@/components/dashboard/AiInsights').then(m => m.AiInsights));
+const SuggestionsPanel = dynamic(() => import('@/components/ai/SuggestionsPanel').then(m => m.SuggestionsPanel));
 import type {
   DashboardSummary,
   DailySales,

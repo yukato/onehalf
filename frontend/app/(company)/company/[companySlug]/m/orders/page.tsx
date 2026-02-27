@@ -2,10 +2,11 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { companyApi } from '@/lib/company-api';
 import { SearchBox } from '@/components/ui/SearchBox';
 import { OrderList } from '@/components/orders/OrderList';
-import { OrderDetail } from '@/components/orders/OrderDetail';
+const OrderDetail = dynamic(() => import('@/components/orders/OrderDetail').then(m => m.OrderDetail));
 import { OrderShareModal } from '@/components/orders/OrderShareModal';
 import { ORDER_TYPE_LABELS } from '@/types';
 import type { Order, OrderStatus, OrderType } from '@/types';

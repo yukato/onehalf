@@ -2,11 +2,12 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { api } from '@/lib/api';
 import { ModuleHeader } from '@/components/modules/ModuleHeader';
 import { SearchBox } from '@/components/ui/SearchBox';
 import { DeliveryNoteList } from '@/components/delivery-notes/DeliveryNoteList';
-import { DeliveryNoteDetail } from '@/components/delivery-notes/DeliveryNoteDetail';
+const DeliveryNoteDetail = dynamic(() => import('@/components/delivery-notes/DeliveryNoteDetail').then(m => m.DeliveryNoteDetail));
 import type { DeliveryNote, DeliveryNoteStatus } from '@/types';
 
 const PAGE_SIZE = 50;

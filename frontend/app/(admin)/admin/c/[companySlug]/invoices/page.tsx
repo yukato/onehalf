@@ -2,12 +2,13 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { api } from '@/lib/api';
 import { ModuleHeader } from '@/components/modules/ModuleHeader';
 import { SearchBox } from '@/components/ui/SearchBox';
 import { InvoiceList } from '@/components/invoices/InvoiceList';
-import { InvoiceDetail } from '@/components/invoices/InvoiceDetail';
-import { PaymentForm } from '@/components/invoices/PaymentForm';
+const InvoiceDetail = dynamic(() => import('@/components/invoices/InvoiceDetail').then(m => m.InvoiceDetail));
+const PaymentForm = dynamic(() => import('@/components/invoices/PaymentForm').then(m => m.PaymentForm));
 import type { Invoice, InvoiceStatus, Customer, DeliveryNote } from '@/types';
 
 const PAGE_SIZE = 50;

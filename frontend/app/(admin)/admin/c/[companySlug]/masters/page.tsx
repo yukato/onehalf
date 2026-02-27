@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { api } from '@/lib/api';
 import { ModuleHeader } from '@/components/modules/ModuleHeader';
 import { SearchBox } from '@/components/ui/SearchBox';
@@ -9,7 +10,7 @@ import { CustomerList } from '@/components/masters/CustomerList';
 import { CustomerForm } from '@/components/masters/CustomerForm';
 import { ProductList } from '@/components/masters/ProductList';
 import { ProductForm } from '@/components/masters/ProductForm';
-import { CsvImportModal } from '@/components/masters/CsvImportModal';
+const CsvImportModal = dynamic(() => import('@/components/masters/CsvImportModal').then(m => m.CsvImportModal));
 import type { Customer, Product, ProductCategory } from '@/types';
 
 const PAGE_SIZE = 50;

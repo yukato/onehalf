@@ -2,11 +2,12 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { companyApi } from '@/lib/company-api';
 import { SearchBox } from '@/components/ui/SearchBox';
 import { QuotationList } from '@/components/quotations/QuotationList';
-import { QuotationForm } from '@/components/quotations/QuotationForm';
-import { QuotationDetail } from '@/components/quotations/QuotationDetail';
+const QuotationForm = dynamic(() => import('@/components/quotations/QuotationForm').then(m => m.QuotationForm));
+const QuotationDetail = dynamic(() => import('@/components/quotations/QuotationDetail').then(m => m.QuotationDetail));
 import { ShareLinkModal } from '@/components/quotations/ShareLinkModal';
 import type { Quotation, QuotationStatus } from '@/types';
 
