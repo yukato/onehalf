@@ -4,8 +4,8 @@ import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { Logo } from './Logo';
 import { ModuleIcon } from '@/lib/module-icons';
-import { api } from '@/lib/api';
-import type { AdminUser, SidebarCompany } from '@/types';
+import { useSidebarCompanies } from '@/hooks/use-sidebar-companies';
+import type { AdminUser } from '@/types';
 
 export type PageType =
   | 'dashboard'
@@ -28,7 +28,7 @@ interface SidebarProps {
 export function Sidebar({ currentPage, currentPath, currentUser, onLogout }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [sidebarCompanies, setSidebarCompanies] = useState<SidebarCompany[]>([]);
+  const { companies: sidebarCompanies } = useSidebarCompanies();
   const menuRef = useRef<HTMLDivElement>(null);
 
   // メニュー外クリックで閉じる
@@ -40,12 +40,6 @@ export function Sidebar({ currentPage, currentPath, currentUser, onLogout }: Sid
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  // サイドバー用の会社+モジュールデータを取得
-  useEffect(() => {
-    if (!api.getAccessToken()) return;
-    api.getCompaniesSidebar().then((res) => setSidebarCompanies(res.companies)).catch(() => {});
   }, []);
 
   return (
