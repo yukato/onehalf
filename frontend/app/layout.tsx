@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from 'next';
-import { BugsnagProvider } from '@/components/providers/BugsnagProvider';
 import './globals.css';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://support.bachelorapp.net';
@@ -62,7 +61,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ja">
       <body className="font-sans antialiased">
-        <BugsnagProvider>{children}</BugsnagProvider>
+        {children}
       </body>
     </html>
   );
