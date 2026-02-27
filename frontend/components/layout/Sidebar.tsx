@@ -109,11 +109,8 @@ export function Sidebar({ currentPage, currentPath, currentUser, onLogout }: Sid
         </ul>
 
         {/* CS向け機能 */}
-        <div className={`my-3 ${collapsed ? 'mx-2' : ''}`}>
-          <div className="border-t border-gray-200" />
-        </div>
         {!collapsed && (
-          <div className="px-2 py-1 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+          <div className="px-2 pt-4 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider">
             CS
           </div>
         )}
@@ -178,11 +175,8 @@ export function Sidebar({ currentPage, currentPath, currentUser, onLogout }: Sid
         {/* 会社ごとのセクション（動的） */}
         {sidebarCompanies.map((company) => (
           <div key={company.id}>
-            <div className={`my-3 ${collapsed ? 'mx-2' : ''}`}>
-              <div className="border-t border-gray-200" />
-            </div>
             {!collapsed && (
-              <div className="px-2 py-1 text-xs font-semibold text-gray-400 uppercase tracking-wider truncate" title={company.name}>
+              <div className="px-2 pt-4 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider truncate" title={company.name}>
                 {company.name}
               </div>
             )}
@@ -251,11 +245,8 @@ export function Sidebar({ currentPage, currentPath, currentUser, onLogout }: Sid
         ))}
 
         {/* 管理機能 */}
-        <div className={`my-3 ${collapsed ? 'mx-2' : ''}`}>
-          <div className="border-t border-gray-200" />
-        </div>
         {!collapsed && (
-          <div className="px-2 py-1 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+          <div className="px-2 pt-4 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider">
             管理
           </div>
         )}
@@ -410,7 +401,7 @@ export function Sidebar({ currentPage, currentPath, currentUser, onLogout }: Sid
 
       {/* ユーザーメニュー */}
       {currentUser && (
-        <div className="px-3 py-3 border-t border-gray-200 relative" ref={menuRef}>
+        <div className="px-3 py-3 relative" ref={menuRef}>
           <button
             onClick={() => setShowUserMenu(!showUserMenu)}
             className={`flex items-center w-full px-2 py-2 text-sm text-gray-600 rounded-lg hover:bg-gray-50 hover:text-gray-900 group ${collapsed ? 'justify-center' : ''}`}

@@ -111,11 +111,8 @@ export function CompanySidebar({
         {/* Modules */}
         {modules.length > 0 && (
           <>
-            <div className={`my-3 ${collapsed ? 'mx-2' : ''}`}>
-              <div className="border-t border-gray-200" />
-            </div>
             {!collapsed && (
-              <div className="px-2 py-1 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+              <div className="px-2 pt-4 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider">
                 機能
               </div>
             )}
@@ -148,10 +145,7 @@ export function CompanySidebar({
         )}
 
         {/* Settings (fixed, not module-dependent) */}
-        <div className={`my-3 ${collapsed ? 'mx-2' : ''}`}>
-          <div className="border-t border-gray-200" />
-        </div>
-        <ul className="space-y-1 font-medium">
+        <ul className="mt-4 space-y-1 font-medium">
           <li>
             <Link
               href={`/company/${companySlug}/m/settings`}
@@ -188,7 +182,7 @@ export function CompanySidebar({
       </nav>
 
       {/* User menu */}
-      <div className="px-3 py-3 border-t border-gray-200 relative" ref={menuRef}>
+      <div className="px-3 py-3 relative" ref={menuRef}>
         <button
           onClick={() => setShowUserMenu(!showUserMenu)}
           className={`flex items-center w-full px-2 py-2 text-sm text-gray-600 rounded-lg hover:bg-gray-50 hover:text-gray-900 group ${collapsed ? 'justify-center' : ''}`}
