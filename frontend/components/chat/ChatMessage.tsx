@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { clsx } from 'clsx';
 import ReactMarkdown from 'react-markdown';
 import remarkBreaks from 'remark-breaks';
@@ -18,7 +18,7 @@ interface ChatMessageProps {
 
 const CONTACT_FORM_URL = 'https://helpcenter.bachelorapp.net/hc/ja/requests/new';
 
-export function ChatMessage({
+export const ChatMessage = React.memo(function ChatMessage({
   message,
   showResolutionPrompt = false,
   isPreview = false,
@@ -174,7 +174,7 @@ export function ChatMessage({
       </div>
     </div>
   );
-}
+});
 
 function SimilarTickets({ tickets }: { tickets: SimilarTicketRef[] }) {
   return (

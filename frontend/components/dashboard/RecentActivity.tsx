@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { formatCurrency } from '@/components/ui/AmountDisplay';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import type { RecentOrder, Receivable } from '@/types';
@@ -19,7 +20,7 @@ function isOverdue(dueDate: string | null): boolean {
   return new Date(dueDate) < new Date();
 }
 
-export function RecentActivity({ orders, receivables }: RecentActivityProps) {
+export const RecentActivity = React.memo(function RecentActivity({ orders, receivables }: RecentActivityProps) {
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
       {/* 最近の受注 */}
@@ -117,4 +118,4 @@ export function RecentActivity({ orders, receivables }: RecentActivityProps) {
       </div>
     </div>
   );
-}
+});

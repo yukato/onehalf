@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { formatCurrency } from '@/components/ui/AmountDisplay';
 import type { TopCustomer, TopProduct } from '@/types';
 
@@ -34,7 +35,7 @@ function getRankBg(rank: number): string {
   }
 }
 
-export function RankingTables({ customers, products }: RankingTablesProps) {
+export const RankingTables = React.memo(function RankingTables({ customers, products }: RankingTablesProps) {
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
       {/* 取引先ランキング */}
@@ -128,4 +129,4 @@ export function RankingTables({ customers, products }: RankingTablesProps) {
       </div>
     </div>
   );
-}
+});

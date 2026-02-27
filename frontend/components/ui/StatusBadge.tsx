@@ -1,5 +1,7 @@
 'use client';
 
+import React from 'react';
+
 const statusColors: Record<string, { bg: string; text: string }> = {
   // Quotation statuses
   draft: { bg: 'bg-gray-100', text: 'text-gray-700' },
@@ -54,7 +56,7 @@ interface StatusBadgeProps {
   size?: 'sm' | 'md';
 }
 
-export function StatusBadge({ status, label, size = 'sm' }: StatusBadgeProps) {
+export const StatusBadge = React.memo(function StatusBadge({ status, label, size = 'sm' }: StatusBadgeProps) {
   const colors = statusColors[status] || statusColors.draft;
   const displayLabel = label || statusLabels[status] || status;
 
@@ -67,4 +69,4 @@ export function StatusBadge({ status, label, size = 'sm' }: StatusBadgeProps) {
       {displayLabel}
     </span>
   );
-}
+});

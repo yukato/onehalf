@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { formatCurrency } from '@/components/ui/AmountDisplay';
 import type { DailySales, MonthlySales } from '@/types';
@@ -54,7 +55,7 @@ function ChartTooltip({ active, payload, label }: ChartTooltipProps) {
   );
 }
 
-export function SalesChart({ daily, monthly, currentView, onViewChange }: SalesChartProps) {
+export const SalesChart = React.memo(function SalesChart({ daily, monthly, currentView, onViewChange }: SalesChartProps) {
   const isDaily = currentView === 'daily';
 
   const chartData = isDaily
@@ -125,4 +126,4 @@ export function SalesChart({ daily, monthly, currentView, onViewChange }: SalesC
       )}
     </div>
   );
-}
+});

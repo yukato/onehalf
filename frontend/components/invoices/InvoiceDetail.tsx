@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { formatCurrency } from '@/components/ui/AmountDisplay';
 import type { Invoice, InvoiceStatus } from '@/types';
@@ -17,7 +18,7 @@ interface InvoiceDetailProps {
   onAddPayment: () => void;
 }
 
-export function InvoiceDetail({ invoice, onClose, onShare, onStatusChange, onAddPayment }: InvoiceDetailProps) {
+export const InvoiceDetail = React.memo(function InvoiceDetail({ invoice, onClose, onShare, onStatusChange, onAddPayment }: InvoiceDetailProps) {
   const nextStatus = NEXT_STATUS[invoice.status as InvoiceStatus];
   const canAddPayment = ['sent', 'partially_paid', 'overdue'].includes(invoice.status);
   const remaining = invoice.totalAmount - invoice.paidAmount;
@@ -220,4 +221,4 @@ export function InvoiceDetail({ invoice, onClose, onShare, onStatusChange, onAdd
       </div>
     </div>
   );
-}
+});

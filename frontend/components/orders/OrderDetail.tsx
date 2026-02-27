@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { formatCurrency } from '@/components/ui/AmountDisplay';
 import { ORDER_TYPE_LABELS } from '@/types';
@@ -27,7 +28,7 @@ interface OrderDetailProps {
   onStatusChange: (status: string) => void;
 }
 
-export function OrderDetail({ order, onClose, onShare, onStatusChange }: OrderDetailProps) {
+export const OrderDetail = React.memo(function OrderDetail({ order, onClose, onShare, onStatusChange }: OrderDetailProps) {
   const nextStatus = NEXT_STATUS[order.status as OrderStatus];
 
   return (
@@ -247,4 +248,4 @@ export function OrderDetail({ order, onClose, onShare, onStatusChange }: OrderDe
       </div>
     </div>
   );
-}
+});

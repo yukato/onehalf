@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { formatCurrency } from '@/components/ui/AmountDisplay';
 import type { DashboardSummary } from '@/types';
 
@@ -39,7 +40,7 @@ function WarningIcon() {
   );
 }
 
-export function KpiCards({ summary }: KpiCardsProps) {
+export const KpiCards = React.memo(function KpiCards({ summary }: KpiCardsProps) {
   const hasReceivable = summary.receivableAmount > 0;
 
   return (
@@ -94,4 +95,4 @@ export function KpiCards({ summary }: KpiCardsProps) {
       </div>
     </div>
   );
-}
+});

@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { formatCurrency } from '@/components/ui/AmountDisplay';
 import type { Quotation } from '@/types';
@@ -12,7 +13,7 @@ interface QuotationDetailProps {
   onPdf: () => void;
 }
 
-export function QuotationDetail({ quotation, onClose, onShare, onConvert, onPdf }: QuotationDetailProps) {
+export const QuotationDetail = React.memo(function QuotationDetail({ quotation, onClose, onShare, onConvert, onPdf }: QuotationDetailProps) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
       <div
@@ -174,4 +175,4 @@ export function QuotationDetail({ quotation, onClose, onShare, onConvert, onPdf 
       </div>
     </div>
   );
-}
+});
