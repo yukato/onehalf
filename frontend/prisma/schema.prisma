@@ -58,6 +58,7 @@ model Company {
   users             CompanyUser[]
   moduleAssignments CompanyModuleAssignment[]
 
+  @@index([isActive])
   @@map("companies")
 }
 
@@ -77,6 +78,7 @@ model CompanyUser {
 
   @@unique([companyId, email])
   @@index([companyId])
+  @@index([email])
   @@map("company_users")
 }
 
@@ -128,6 +130,7 @@ model CompanyModuleAssignment {
   @@unique([companyId, moduleId])
   @@index([companyId])
   @@index([moduleId])
+  @@index([companyId, isActive])
   @@map("company_module_assignments")
 }
 

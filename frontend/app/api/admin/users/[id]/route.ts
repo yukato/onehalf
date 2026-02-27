@@ -58,9 +58,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const { id } = await params;
     const { username, email, password, role, isActive } = await request.json();
 
-    // 既存ユーザーの確認
+    // 既存ユーザーの確認（必要なフィールドのみ取得）
     const existingUser = await prisma.adminUser.findUnique({
       where: { id: BigInt(id) },
+      select: { role: true, email: true },
     });
 
     if (!existingUser) {
@@ -81,6 +82,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     if (email && email !== existingUser.email) {
       const duplicateEmail = await prisma.adminUser.findUnique({
         where: { email },
+        select: { id: true },
       });
       if (duplicateEmail) {
         return NextResponse.json({ detail: 'Email already exists' }, { status: 400 });
@@ -142,23 +144,25 @@ export async function DELETE(
       return NextResponse.json({ detail: 'Cannot delete yourself' }, { status: 400 });
     }
 
-    // 既存ユーザーの確認
+    // 既存ユーザーの確認（必要なフィールドのみ取得）
     const existingUser = await prisma.adminUser.findUnique({
       where: { id: BigInt(id) },
+      select: { id: true },
     });
 
     if (!existingUser) {
       return NextResponse.json({ detail: 'User not found' }, { status: 404 });
     }
 
-    // セッションも削除
-    await prisma.adminSession.deleteMany({
-      where: { userId: BigInt(id) },
-    });
-
-    await prisma.adminUser.delete({
-      where: { id: BigInt(id) },
-    });
+    // セッションとユーザーをトランザクションで一括削除
+    await prisma.$transaction([
+      prisma.adminSession.deleteMany({
+        where: { userId: BigInt(id) },
+      }),
+      prisma.adminUser.delete({
+        where: { id: BigInt(id) },
+      }),
+    ]);
 
     return NextResponse.json({ success: true });
   } catch (error) {

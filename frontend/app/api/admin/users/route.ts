@@ -68,6 +68,7 @@ export async function POST(request: NextRequest) {
     // メールの重複チェック
     const existingEmail = await prisma.adminUser.findUnique({
       where: { email },
+      select: { id: true },
     });
     if (existingEmail) {
       return NextResponse.json({ detail: 'Email already exists' }, { status: 400 });

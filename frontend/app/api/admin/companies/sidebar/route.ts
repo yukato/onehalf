@@ -18,10 +18,23 @@ export async function GET(request: NextRequest) {
     const companies = await prisma.company.findMany({
       where: { isActive: true },
       orderBy: { createdAt: 'asc' },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        slug: true,
         moduleAssignments: {
           where: { isActive: true, module: { isActive: true } },
-          include: { module: true },
+          select: {
+            module: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+                icon: true,
+                sortOrder: true,
+              },
+            },
+          },
           orderBy: { module: { sortOrder: 'asc' } },
         },
       },
