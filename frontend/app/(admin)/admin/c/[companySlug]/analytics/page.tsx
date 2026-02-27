@@ -1,16 +1,23 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
 import { api } from '@/lib/api';
 import { ModuleHeader } from '@/components/modules/ModuleHeader';
 import dynamic from 'next/dynamic';
 import { KpiCards } from '@/components/dashboard/KpiCards';
-const SalesChart = dynamic(() => import('@/components/dashboard/SalesChart').then(m => m.SalesChart), { ssr: false });
+const SalesChart = dynamic(() => import('@/components/dashboard/SalesChart').then(m => m.SalesChart), {
+  ssr: false,
+  loading: () => <div className="bg-white rounded-lg border border-gray-200 p-6"><div className="h-64 bg-gray-100 rounded animate-pulse" /></div>,
+});
 import { RankingTables } from '@/components/dashboard/RankingTables';
 import { RecentActivity } from '@/components/dashboard/RecentActivity';
-const AiInsights = dynamic(() => import('@/components/dashboard/AiInsights').then(m => m.AiInsights));
-const SuggestionsPanel = dynamic(() => import('@/components/ai/SuggestionsPanel').then(m => m.SuggestionsPanel));
+const AiInsights = dynamic(() => import('@/components/dashboard/AiInsights').then(m => m.AiInsights), {
+  loading: () => <div className="bg-white rounded-lg border border-gray-200 p-6 animate-pulse"><div className="h-4 bg-gray-200 rounded w-32 mb-4" /><div className="h-32 bg-gray-100 rounded" /></div>,
+});
+const SuggestionsPanel = dynamic(() => import('@/components/ai/SuggestionsPanel').then(m => m.SuggestionsPanel), {
+  loading: () => <div className="bg-white rounded-lg border border-gray-200 p-6 animate-pulse"><div className="h-4 bg-gray-200 rounded w-40 mb-4" /><div className="h-24 bg-gray-100 rounded" /></div>,
+});
 import type {
   DashboardSummary,
   DailySales,
