@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { ModuleHeader } from '@/components/modules/ModuleHeader';
@@ -63,13 +63,18 @@ export default function AdminCompanyDocumentsPage() {
     }
   }, [companySlug]);
 
+  const pollIntervalRef = useRef(2000);
   useEffect(() => {
     const hasProcessing = documents.some((d) => d.status === 'processing');
-    if (!hasProcessing) return;
-    const timer = setInterval(() => {
+    if (!hasProcessing) {
+      pollIntervalRef.current = 2000;
+      return;
+    }
+    const timer = setTimeout(() => {
       loadDocuments(selectedTagId, offset);
-    }, 3000);
-    return () => clearInterval(timer);
+      pollIntervalRef.current = Math.min(pollIntervalRef.current * 1.5, 15000);
+    }, pollIntervalRef.current);
+    return () => clearTimeout(timer);
   }, [documents, selectedTagId, offset, loadDocuments]);
 
   useEffect(() => {

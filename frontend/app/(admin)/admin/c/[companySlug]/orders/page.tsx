@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { api } from '@/lib/api';
@@ -108,16 +108,21 @@ export default function AdminOrdersPage() {
     }
   }, [mainTab]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Auto-refresh extracting items
+  // Auto-refresh extracting items（指数バックオフ）
+  const ocrPollIntervalRef = useRef(2000);
   useEffect(() => {
     if (mainTab !== 'ocr') return;
     const hasExtracting = ocrExtractions.some(e => e.status === 'pending' || e.status === 'extracting');
-    if (!hasExtracting) return;
+    if (!hasExtracting) {
+      ocrPollIntervalRef.current = 2000;
+      return;
+    }
 
-    const interval = setInterval(() => {
+    const timer = setTimeout(() => {
       loadOcrExtractions(ocrOffset);
-    }, 3000);
-    return () => clearInterval(interval);
+      ocrPollIntervalRef.current = Math.min(ocrPollIntervalRef.current * 1.5, 15000);
+    }, ocrPollIntervalRef.current);
+    return () => clearTimeout(timer);
   }, [mainTab, ocrExtractions, ocrOffset, loadOcrExtractions]);
 
   const handleSearch = () => {

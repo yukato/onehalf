@@ -38,11 +38,9 @@ export async function getDashboardSummary(companySlug: string) {
 
     p.execute<RowDataPacket[]>(
       `SELECT
-         COALESCE(SUM(i.total_amount - COALESCE(paid.total_paid, 0)), 0) AS receivable_amount,
+         COALESCE(SUM(i.total_amount - COALESCE((SELECT SUM(p.amount) FROM payments p WHERE p.invoice_id = i.id), 0)), 0) AS receivable_amount,
          COUNT(*) AS receivable_count
        FROM invoices i
-       LEFT JOIN (SELECT invoice_id, SUM(amount) AS total_paid FROM payments GROUP BY invoice_id) paid
-         ON paid.invoice_id = i.id
        WHERE i.status IN ('sent', 'partially_paid', 'overdue')`
     ).then(([rows]) => rows),
 
@@ -220,21 +218,21 @@ interface ReceivableRow extends RowDataPacket {
   status: string;
 }
 
-export async function getReceivables(companySlug: string) {
+export async function getReceivables(companySlug: string, limit = 20) {
   const p = await pool(companySlug);
 
   const [rows] = await p.execute<ReceivableRow[]>(
     `SELECT
        i.id, i.invoice_number, c.name AS customer_name,
        i.invoice_date, i.due_date, i.total_amount,
-       COALESCE(paid.total_paid, 0) AS paid_amount,
+       COALESCE((SELECT SUM(p.amount) FROM payments p WHERE p.invoice_id = i.id), 0) AS paid_amount,
        i.status
      FROM invoices i
      LEFT JOIN customers c ON c.id = i.customer_id
-     LEFT JOIN (SELECT invoice_id, SUM(amount) AS total_paid FROM payments GROUP BY invoice_id) paid
-       ON paid.invoice_id = i.id
      WHERE i.status IN ('sent', 'partially_paid', 'overdue')
-     ORDER BY i.due_date ASC, i.invoice_date ASC`
+     ORDER BY i.due_date ASC, i.invoice_date ASC
+     LIMIT ?`,
+    [String(limit)]
   );
 
   return rows.map(r => ({
