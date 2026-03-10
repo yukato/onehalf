@@ -4,9 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import type {
   Message as MessageType,
   FAQChatResponse,
-  InternalChatResponse,
   FAQStats,
-  InternalStats,
 } from '@/types';
 import { api } from '@/lib/api';
 import { generateUUID } from '@/lib/utils';
@@ -18,7 +16,7 @@ import { LoadingIndicator } from './LoadingIndicator';
 export type { Message } from '@/types';
 
 interface ChatContainerProps {
-  type: 'faq' | 'internal';
+  type: 'faq';
   faqCategory?: string;
   initialMessages?: MessageType[];
   onCategorySelect?: (category: string) => void;
@@ -36,7 +34,7 @@ export function ChatContainer({
   const [messages, setMessages] = useState<MessageType[]>(initialMessages);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [stats, setStats] = useState<FAQStats | InternalStats | null>(null);
+  const [stats, setStats] = useState<FAQStats | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -57,13 +55,8 @@ export function ChatContainer({
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        if (type === 'faq') {
-          const data = await api.getFAQStats();
-          setStats(data);
-        } else {
-          const data = await api.getInternalStats();
-          setStats(data);
-        }
+        const data = await api.getFAQStats();
+        setStats(data);
       } catch {
         // Stats fetch failed, continue without stats
       }
@@ -84,27 +77,20 @@ export function ChatContainer({
     setError(null);
 
     try {
-      let response: FAQChatResponse | InternalChatResponse;
-
-      if (type === 'faq') {
-        // 会話履歴を構築（現在のメッセージを含む）
-        const conversationHistory = messages.map((m) => ({
-          role: m.role as 'user' | 'assistant',
-          content: m.content,
-        }));
-        response = await api.chatFAQ(content, faqCategory, 3, conversationHistory);
-      } else {
-        response = await api.chatInternal(content);
-      }
+      // 会話履歴を構築（現在のメッセージを含む）
+      const conversationHistory = messages.map((m) => ({
+        role: m.role as 'user' | 'assistant',
+        content: m.content,
+      }));
+      const response: FAQChatResponse = await api.chatFAQ(content, faqCategory, 3, conversationHistory);
 
       const assistantMessage: MessageType = {
         id: generateUUID(),
         role: 'assistant',
         content: response.answer,
         sources: response.sources,
-        suggestedMacros: 'suggested_macros' in response ? response.suggested_macros : undefined,
-        referencedMacros: 'referenced_macros' in response ? response.referenced_macros : undefined,
-        similarTickets: 'similar_tickets' in response ? response.similar_tickets : undefined,
+        referencedMacros: response.referenced_macros,
+        similarTickets: response.similar_tickets,
         timestamp: new Date(),
       };
 
@@ -118,16 +104,11 @@ export function ChatContainer({
 
   const placeholder = isPreview
     ? 'AIに質問する'
-    : type === 'faq'
-      ? 'ご質問をどうぞ（例：退会方法を教えてください）'
-      : 'お客様からの問い合わせ内容・返信の方向性・補足等を入力してください';
+    : 'ご質問をどうぞ（例：退会方法を教えてください）';
 
   const getDataCount = () => {
     if (!stats) return null;
-    if ('article_count' in stats) {
-      return `${stats.article_count.toLocaleString()}件のFAQ記事`;
-    }
-    return `${stats.ticket_count.toLocaleString()}件の過去チケット`;
+    return `${stats.article_count.toLocaleString()}件のFAQ記事`;
   };
 
   // FAQ type で category 未選択の場合は選択UIを表示
@@ -167,7 +148,7 @@ export function ChatContainer({
                 <div className="w-full">
                   <div className="prose prose-sm max-w-none text-gray-800 font-medium">
                     <p>
-                      バチェラーデート サポートへようこそ！
+                      XXX サポートへようこそ！
                       <br />
                       ご利用の会員種別を教えてください。
                     </p>
@@ -201,9 +182,7 @@ export function ChatContainer({
                 </div>
               )}
               <p className="text-lg text-gray-600 mb-2">
-                {type === 'faq'
-                  ? 'ご質問をお待ちしています'
-                  : 'お客様からの問い合わせ内容を入力してください'}
+                ご質問をお待ちしています
               </p>
               {!isPreview &&
                 (stats ? (

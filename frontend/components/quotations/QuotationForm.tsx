@@ -3,9 +3,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { companyApi } from '@/lib/company-api';
 import { formatCurrency } from '@/components/ui/AmountDisplay';
-import type { Customer, Product, CreateQuotationItemInput } from '@/types';
+import type { Customer, Product, Quotation, CreateQuotationItemInput } from '@/types';
 
 interface QuotationFormProps {
+  initialData?: Quotation;
   onSave: () => void;
   onClose: () => void;
 }
@@ -40,23 +41,40 @@ function todayString(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-export function QuotationForm({ onSave, onClose }: QuotationFormProps) {
+export function QuotationForm({ initialData, onSave, onClose }: QuotationFormProps) {
+  const isEdit = !!initialData;
+
   // Customer search
-  const [customerQuery, setCustomerQuery] = useState('');
+  const [customerQuery, setCustomerQuery] = useState(initialData?.customer.name ?? '');
   const [customerResults, setCustomerResults] = useState<Customer[]>([]);
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
+    initialData ? { id: initialData.customerId, name: initialData.customer.name, code: initialData.customer.code } as Customer : null
+  );
   const customerRef = useRef<HTMLDivElement>(null);
 
   // Fields
-  const [subject, setSubject] = useState('');
-  const [quotationDate, setQuotationDate] = useState(todayString());
-  const [validUntil, setValidUntil] = useState('');
-  const [notes, setNotes] = useState('');
-  const [internalMemo, setInternalMemo] = useState('');
+  const [subject, setSubject] = useState(initialData?.subject ?? '');
+  const [quotationDate, setQuotationDate] = useState(initialData?.quotationDate ?? todayString());
+  const [validUntil, setValidUntil] = useState(initialData?.validUntil ?? '');
+  const [notes, setNotes] = useState(initialData?.notes ?? '');
+  const [internalMemo, setInternalMemo] = useState(initialData?.internalMemo ?? '');
 
   // Items
-  const [items, setItems] = useState<FormItem[]>([emptyItem()]);
+  const [items, setItems] = useState<FormItem[]>(
+    initialData?.items.length
+      ? initialData.items.map((item) => ({
+          key: nextKey++,
+          productId: item.productId ?? undefined,
+          productCode: item.productCode ?? '',
+          productName: item.productName,
+          quantity: item.quantity,
+          unit: item.unit,
+          unitPrice: item.unitPrice,
+          taxRate: item.taxRate,
+        }))
+      : [emptyItem()]
+  );
 
   // Product search per row
   const [productSearchIndex, setProductSearchIndex] = useState<number | null>(null);
@@ -83,9 +101,8 @@ export function QuotationForm({ onSave, onClose }: QuotationFormProps) {
 
   // Customer search
   const searchCustomers = useCallback(async (q: string) => {
-    if (!q.trim()) { setCustomerResults([]); return; }
     try {
-      const res = await companyApi.getCustomers({ q, limit: 10 });
+      const res = await companyApi.getCustomers({ q: q.trim() || undefined, limit: 10 });
       setCustomerResults(res.customers);
     } catch { /* ignore */ }
   }, []);
@@ -97,9 +114,8 @@ export function QuotationForm({ onSave, onClose }: QuotationFormProps) {
 
   // Product search
   const searchProducts = useCallback(async (q: string) => {
-    if (!q.trim()) { setProductResults([]); return; }
     try {
-      const res = await companyApi.getProducts({ q, limit: 10 });
+      const res = await companyApi.getProducts({ q: q.trim() || undefined, limit: 10 });
       setProductResults(res.products);
     } catch { /* ignore */ }
   }, []);
@@ -178,15 +194,27 @@ export function QuotationForm({ onSave, onClose }: QuotationFormProps) {
         taxRate: item.taxRate,
       }));
 
-      await companyApi.createQuotation({
-        customerId: selectedCustomer.id,
-        subject: subject || undefined,
-        quotationDate,
-        validUntil: validUntil || undefined,
-        notes: notes || undefined,
-        internalMemo: internalMemo || undefined,
-        items: itemsData,
-      });
+      if (isEdit && initialData) {
+        await companyApi.updateQuotation(initialData.id, {
+          customerId: selectedCustomer.id,
+          subject: subject || undefined,
+          quotationDate,
+          validUntil: validUntil || undefined,
+          notes: notes || undefined,
+          internalMemo: internalMemo || undefined,
+          items: itemsData,
+        });
+      } else {
+        await companyApi.createQuotation({
+          customerId: selectedCustomer.id,
+          subject: subject || undefined,
+          quotationDate,
+          validUntil: validUntil || undefined,
+          notes: notes || undefined,
+          internalMemo: internalMemo || undefined,
+          items: itemsData,
+        });
+      }
 
       onSave();
     } catch (err) {
@@ -197,13 +225,13 @@ export function QuotationForm({ onSave, onClose }: QuotationFormProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 pt-10" onClick={onClose}>
       <div
-        className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+        className="bg-white rounded-lg shadow-xl max-w-5xl w-full mx-4 max-h-[85vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">見積書を新規作成</h3>
+          <h3 className="text-lg font-semibold text-gray-900">{isEdit ? '見積書を編集' : '見積書を新規作成'}</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -225,7 +253,7 @@ export function QuotationForm({ onSave, onClose }: QuotationFormProps) {
               type="text"
               value={customerQuery}
               onChange={(e) => { setCustomerQuery(e.target.value); setShowCustomerDropdown(true); setSelectedCustomer(null); }}
-              onFocus={() => setShowCustomerDropdown(true)}
+              onFocus={() => { setShowCustomerDropdown(true); searchCustomers(customerQuery); }}
               placeholder="取引先名で検索..."
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
             />
@@ -285,13 +313,13 @@ export function QuotationForm({ onSave, onClose }: QuotationFormProps) {
           {/* Line Items */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">明細行</label>
-            <div className="border border-gray-200 rounded-lg overflow-hidden">
+            <div className="border border-gray-200 rounded-lg overflow-visible">
               <table className="w-full">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-200">
                     <th className="text-left px-3 py-2 text-xs font-medium text-gray-500">商品名</th>
                     <th className="text-right px-3 py-2 text-xs font-medium text-gray-500 w-20">数量</th>
-                    <th className="text-left px-3 py-2 text-xs font-medium text-gray-500 w-16">単位</th>
+                    <th className="text-left px-3 py-2 text-xs font-medium text-gray-500 w-28">単位</th>
                     <th className="text-right px-3 py-2 text-xs font-medium text-gray-500 w-28">単価</th>
                     <th className="text-right px-3 py-2 text-xs font-medium text-gray-500 w-28">金額</th>
                     <th className="w-10" />
@@ -311,9 +339,8 @@ export function QuotationForm({ onSave, onClose }: QuotationFormProps) {
                           }}
                           onFocus={() => {
                             setProductSearchIndex(index);
-                            if (item.productName) {
-                              setProductQuery(item.productName);
-                            }
+                            setProductQuery(item.productName);
+                            searchProducts(item.productName);
                           }}
                           placeholder="商品を検索..."
                           className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
@@ -346,12 +373,23 @@ export function QuotationForm({ onSave, onClose }: QuotationFormProps) {
                         />
                       </td>
                       <td className="px-3 py-2">
-                        <input
-                          type="text"
+                        <select
                           value={item.unit}
                           onChange={(e) => updateItem(index, 'unit', e.target.value)}
                           className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                        />
+                        >
+                          <option value="個">個</option>
+                          <option value="台">台</option>
+                          <option value="式">式</option>
+                          <option value="セット">セット</option>
+                          <option value="本">本</option>
+                          <option value="枚">枚</option>
+                          <option value="箱">箱</option>
+                          <option value="kg">kg</option>
+                          <option value="m">m</option>
+                          <option value="時間">時間</option>
+                          <option value="人工">人工</option>
+                        </select>
                       </td>
                       <td className="px-3 py-2">
                         <input

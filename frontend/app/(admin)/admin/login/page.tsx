@@ -83,7 +83,7 @@ export default function LoginPage() {
         </form>
 
         <div className="mt-6 text-center text-xs text-gray-400">
-          © {new Date().getFullYear()} BACHELOR DATE INC.
+          © {new Date().getFullYear()} XXX
         </div>
       </div>
     </div>

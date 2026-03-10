@@ -9,9 +9,10 @@ interface ShareLinkModalProps {
   quotationId: string;
   quotationNumber: string;
   onClose: () => void;
+  onLinkCreated?: () => void;
 }
 
-export function ShareLinkModal({ quotationId, quotationNumber, onClose }: ShareLinkModalProps) {
+export function ShareLinkModal({ quotationId, quotationNumber, onClose, onLinkCreated }: ShareLinkModalProps) {
   const [canApprove, setCanApprove] = useState(true);
   const [expiresInDays, setExpiresInDays] = useState(14);
   const [isCreating, setIsCreating] = useState(false);
@@ -38,6 +39,7 @@ export function ShareLinkModal({ quotationId, quotationNumber, onClose }: ShareL
       const res = await companyApi.shareQuotation(quotationId, { canApprove, expiresInDays });
       setCreatedUrl(res.url);
       await loadLinks();
+      onLinkCreated?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : '共有リンクの作成に失敗しました');
     } finally {
@@ -63,7 +65,7 @@ export function ShareLinkModal({ quotationId, quotationNumber, onClose }: ShareL
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 pt-10" onClick={onClose}>
       <div className="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4 max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900">

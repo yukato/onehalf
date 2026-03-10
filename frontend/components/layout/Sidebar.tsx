@@ -9,8 +9,6 @@ import type { AdminUser } from '@/types';
 
 export type PageType =
   | 'dashboard'
-  | 'internal'
-  | 'improvements'
   | 'history'
   | 'settings'
   | 'admin-users'
@@ -98,70 +96,6 @@ export function Sidebar({ currentPage, currentPath, currentUser, onLogout }: Sid
                 />
               </svg>
               {!collapsed && <span className="ms-3">ダッシュボード</span>}
-            </Link>
-          </li>
-        </ul>
-
-        {/* CS向け機能 */}
-        {!collapsed && (
-          <div className="px-2 pt-4 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-            CS
-          </div>
-        )}
-        <ul className="space-y-1 font-medium">
-          {/* 内部サポート */}
-          <li>
-            <Link
-              href="/admin/cs/internal"
-              className={`flex items-center px-2 py-2 text-sm rounded-lg transition-colors group ${
-                currentPage === 'internal'
-                  ? 'bg-gray-100 text-gray-900 font-medium'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-              } ${collapsed ? 'justify-center' : ''}`}
-              title={collapsed ? '内部サポート' : undefined}
-            >
-              <svg
-                className="w-5 h-5 text-gray-400 transition duration-75 group-hover:text-gray-600 flex-shrink-0"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"
-                />
-              </svg>
-              {!collapsed && <span className="ms-3">内部サポート</span>}
-            </Link>
-          </li>
-
-          {/* ナレッジ改善 */}
-          <li>
-            <Link
-              href="/admin/cs/improvements"
-              className={`flex items-center px-2 py-2 text-sm rounded-lg transition-colors group ${
-                currentPage === 'improvements'
-                  ? 'bg-gray-100 text-gray-900 font-medium'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-              } ${collapsed ? 'justify-center' : ''}`}
-              title={collapsed ? 'ナレッジ改善' : undefined}
-            >
-              <svg
-                className="w-5 h-5 text-gray-400 transition duration-75 group-hover:text-gray-600 flex-shrink-0"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-                />
-              </svg>
-              {!collapsed && <span className="ms-3">ナレッジ改善</span>}
             </Link>
           </li>
         </ul>

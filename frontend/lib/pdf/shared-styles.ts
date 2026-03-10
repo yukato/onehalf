@@ -1,7 +1,7 @@
 import { StyleSheet } from '@react-pdf/renderer';
 
 export const colors = {
-  primary: '#CC785C',
+  primary: '#0D2E3B',
   headerBg: '#191919',
   headerText: '#FFFFFF',
   border: '#D1D5DB',

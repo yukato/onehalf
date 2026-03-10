@@ -24,7 +24,6 @@ const LOG_TYPE_COLORS: Record<string, string> = {
 
 const LOG_TYPE_ROUTES: Record<string, string> = {
   faq: '/admin/cs/faq',
-  internal: '/admin/cs/internal',
 };
 
 const EVENT_TYPE_LABELS: Record<string, string> = {

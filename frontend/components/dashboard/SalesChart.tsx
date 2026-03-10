@@ -119,8 +119,8 @@ export const SalesChart = React.memo(function SalesChart({ daily, monthly, curre
               axisLine={false}
               width={60}
             />
-            <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(204, 120, 92, 0.08)' }} />
-            <Bar dataKey="sales" fill="#CC785C" radius={[4, 4, 0, 0]} maxBarSize={40} />
+            <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(13, 46, 59, 0.08)' }} />
+            <Bar dataKey="sales" fill="#0D2E3B" radius={[4, 4, 0, 0]} maxBarSize={40} />
           </BarChart>
         </ResponsiveContainer>
       )}

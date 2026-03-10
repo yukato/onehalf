@@ -5,7 +5,7 @@ import { clsx } from 'clsx';
 import ReactMarkdown from 'react-markdown';
 import remarkBreaks from 'remark-breaks';
 import remarkGfm from 'remark-gfm';
-import type { Message, FAQSource, TicketSource, MacroSuggestion, SimilarTicketRef } from '@/types';
+import type { Message, SimilarTicketRef } from '@/types';
 import { SourceCard } from './SourceCard';
 
 interface ChatMessageProps {
@@ -16,7 +16,7 @@ interface ChatMessageProps {
   isPreview?: boolean;
 }
 
-const CONTACT_FORM_URL = 'https://helpcenter.bachelorapp.net/hc/ja/requests/new';
+const CONTACT_FORM_URL = 'https://XXX/hc/ja/requests/new';
 
 export const ChatMessage = React.memo(function ChatMessage({
   message,
@@ -166,10 +166,6 @@ export const ChatMessage = React.memo(function ChatMessage({
           {message.similarTickets && message.similarTickets.length > 0 && !isPreview && (
             <SimilarTickets tickets={message.similarTickets} />
           )}
-
-          {message.suggestedMacros && message.suggestedMacros.length > 0 && (
-            <MacroSuggestions macros={message.suggestedMacros} />
-          )}
         </div>
       </div>
     </div>
@@ -207,58 +203,3 @@ function SimilarTickets({ tickets }: { tickets: SimilarTicketRef[] }) {
   );
 }
 
-function MacroSuggestions({ macros }: { macros: MacroSuggestion[] }) {
-  const [expandedId, setExpandedId] = useState<number | null>(null);
-  const [copiedId, setCopiedId] = useState<number | null>(null);
-
-  const handleCopy = async (template: string, macroId: number) => {
-    await navigator.clipboard.writeText(template);
-    setCopiedId(macroId);
-    setTimeout(() => setCopiedId(null), 2000);
-  };
-
-  return (
-    <div className="mt-4">
-      <div className="text-sm text-gray-500 flex items-center gap-1 mb-2">
-        <span>📎</span>
-        <span>関連マクロ ({macros.length}件)</span>
-      </div>
-      <div className="space-y-2">
-        {macros.map((macro) => (
-          <div
-            key={macro.macro_id}
-            className="block p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer"
-            onClick={() => setExpandedId(expandedId === macro.macro_id ? null : macro.macro_id)}
-          >
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">{macro.title}</p>
-              </div>
-              <span className="flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                類似度: {(macro.score * 100).toFixed(0)}%
-              </span>
-            </div>
-            {expandedId === macro.macro_id && (
-              <div className="mt-3 pt-3 border-t border-gray-100">
-                <div className="text-xs text-gray-500 mb-2">テンプレート:</div>
-                <pre className="text-xs text-gray-700 whitespace-pre-wrap bg-gray-50 p-2 rounded max-h-48 overflow-y-auto">
-                  {macro.comment_template}
-                </pre>
-                <button
-                  type="button"
-                  className="mt-2 px-3 py-1 text-xs bg-primary text-white rounded hover:bg-primary-dark transition-colors"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleCopy(macro.comment_template, macro.macro_id);
-                  }}
-                >
-                  {copiedId === macro.macro_id ? '✓ コピーしました' : 'コピー'}
-                </button>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}

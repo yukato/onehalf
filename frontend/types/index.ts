@@ -216,39 +216,12 @@ export interface FAQStats {
   model: string;
 }
 
-// Internal Tool
-export interface TicketSource {
-  ticket_id: number;
-  subject: string;
-  url: string;
-  score: number;
-}
-
-export interface MacroSuggestion {
-  macro_id: number;
-  title: string;
-  score: number;
-  comment_template: string;
-}
-
-export interface InternalChatResponse {
-  answer: string;
-  sources: TicketSource[];
-  suggested_macros?: MacroSuggestion[];
-}
-
-export interface InternalStats {
-  ticket_count: number;
-  model: string;
-}
-
 // Chat Message
 export interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
-  sources?: FAQSource[] | TicketSource[];
-  suggestedMacros?: MacroSuggestion[];
+  sources?: FAQSource[];
   referencedMacros?: FAQMacroRef[];
   similarTickets?: SimilarTicketRef[];
   timestamp: Date;
@@ -331,57 +304,6 @@ export interface UpdateSettingsRequest {
   model: string;
 }
 
-// Data Status
-export interface DataSourceStatus {
-  name: string;
-  count: number;
-  latest_item_date: string | null;
-  latest_ticket_id?: number | null;
-  source_file?: string | null;
-  file_updated_at: string | null;
-  embedding_model: string | null;
-  error?: string;
-}
-
-export interface DataStatusResponse {
-  articles: DataSourceStatus;
-  tickets: DataSourceStatus;
-  macros: DataSourceStatus;
-  updated_at: string;
-}
-
-// Data Browse Types
-export interface ArticleItem {
-  id: number;
-  title: string;
-  url: string;
-  updated_at: string | null;
-  category: string | null;
-}
-
-export interface TicketItem {
-  id: number;
-  subject: string;
-  url: string;
-  updated_at: string | null;
-  status: string | null;
-}
-
-export interface MacroItem {
-  id: number;
-  title: string;
-  url: string;
-  updated_at: string | null;
-  is_faq_enabled: boolean;
-  is_internal_enabled: boolean;
-}
-
-export interface DataListResponse<T> {
-  items: T[];
-  total: number;
-  limit: number;
-  offset: number;
-}
 
 // Operational Rules
 // target_gender: ["male"], ["female"], ["male", "female"], or null (not applied)
@@ -434,54 +356,6 @@ export interface RulesListResponse {
 export interface RuleHistoryResponse {
   history: RuleHistory[];
   total: number;
-}
-
-// Improvement Recommendations
-export interface QualityAssessment {
-  confidence_score: number;
-  information_completeness: 'complete' | 'partial' | 'insufficient';
-  suggested_improvement: string | null;
-  missing_topics: string[];
-}
-
-export interface ImprovementSuggestion {
-  id: string;
-  topic: string;
-  occurrence_count: number;
-  sample_questions: string[];
-  avg_confidence: number;
-  suggested_action: 'create_new' | 'update_existing' | 'add_examples';
-  related_faq_ids: string[];
-  created_at: string;
-  status: 'pending' | 'in_progress' | 'resolved' | 'dismissed';
-}
-
-export interface ArticleDraft {
-  id: string;
-  suggestion_id: string;
-  title: string;
-  content: string;
-  source_questions: string[];
-  generated_at: string;
-}
-
-export interface ImprovementSuggestionsResponse {
-  suggestions: ImprovementSuggestion[];
-  total: number;
-}
-
-export interface ArticleDraftsResponse {
-  drafts: ArticleDraft[];
-  total: number;
-}
-
-export interface UpdateSuggestionStatusRequest {
-  status: 'pending' | 'in_progress' | 'resolved' | 'dismissed';
-}
-
-export interface AnalyzeRequest {
-  days?: number;
-  min_occurrences?: number;
 }
 
 

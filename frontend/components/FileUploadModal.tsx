@@ -243,7 +243,7 @@ export function FileUploadModal({
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 pt-[10vh]"
+      className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 pt-10"
       onClick={imageSrc ? undefined : handleClose}
     >
       <div

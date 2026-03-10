@@ -48,6 +48,42 @@ export default function SharedDocumentPage() {
   const [actionResult, setActionResult] = useState<{ success: boolean; message: string } | null>(null);
 
   useEffect(() => {
+    const isMock = process.env.NEXT_PUBLIC_AUTH_MOCK === 'true';
+
+    if (isMock) {
+      // モック：localStorageから該当リンクを探す
+      const allKeys = Object.keys(localStorage).filter((k) => k.startsWith('mock-shared-links-'));
+      let foundLink: SharedLinkData['link'] | null = null;
+
+      for (const key of allKeys) {
+        const links = JSON.parse(localStorage.getItem(key) || '[]');
+        const match = links.find((l: SharedLinkData['link']) => l.token === token);
+        if (match) {
+          foundLink = match;
+          break;
+        }
+      }
+
+      if (!foundLink) {
+        setError('共有リンクが見つからないか、期限が切れています。');
+        setLoading(false);
+        return;
+      }
+
+      // モックデータを取得
+      import('@/lib/mock').then(({ mockQuotations, mockOrders }) => {
+        let docData = null;
+        if (foundLink!.linkType === 'quotation') {
+          docData = mockQuotations.find((q) => q.id === foundLink!.targetId) || null;
+        } else if (foundLink!.linkType === 'order') {
+          docData = mockOrders.find((o) => o.id === foundLink!.targetId) || null;
+        }
+        setData({ link: foundLink!, data: docData, companySlug });
+        setLoading(false);
+      });
+      return;
+    }
+
     const fetchData = async () => {
       try {
         const res = await fetch(`/api/shared/${companySlug}/${token}`);
@@ -73,7 +109,28 @@ export default function SharedDocumentPage() {
       return;
     }
 
+    const isMock = process.env.NEXT_PUBLIC_AUTH_MOCK === 'true';
     setActionLoading(true);
+
+    if (isMock && data) {
+      // モック：localStorageのリンクを更新
+      const storageKey = `mock-shared-links-${data.link.linkType}-${data.link.targetId}`;
+      const links = JSON.parse(localStorage.getItem(storageKey) || '[]');
+      const idx = links.findIndex((l: SharedLinkData['link']) => l.token === token);
+      if (idx >= 0) {
+        if (action === 'approve') {
+          links[idx] = { ...links[idx], approvedAt: new Date().toISOString(), approvedByName: actorName.trim(), approvalComment: comment.trim() || null };
+        } else {
+          links[idx] = { ...links[idx], rejectedAt: new Date().toISOString(), rejectedByName: actorName.trim(), rejectionComment: comment.trim() || null };
+        }
+        localStorage.setItem(storageKey, JSON.stringify(links));
+        setData({ ...data, link: links[idx] });
+        setActionResult({ success: true, message: action === 'approve' ? '承認しました。' : '差戻ししました。' });
+      }
+      setActionLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch(`/api/shared/${companySlug}/${token}/${action}`, {
         method: 'POST',
@@ -212,7 +269,7 @@ export default function SharedDocumentPage() {
                   value={actorName}
                   onChange={(e) => setActorName(e.target.value)}
                   placeholder="承認者のお名前"
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#CC785C] focus:border-transparent"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
               </div>
 
@@ -225,7 +282,7 @@ export default function SharedDocumentPage() {
                   onChange={(e) => setComment(e.target.value)}
                   placeholder="コメントがあればご記入ください"
                   rows={3}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#CC785C] focus:border-transparent"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
               </div>
 
