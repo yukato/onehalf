@@ -24,7 +24,6 @@ import type {
   Quotation,
   CreateQuotationRequest,
   UpdateQuotationRequest,
-  UpdateQuotationRequest,
   SharedLinkResponse,
   OrdersResponse,
   Order,
@@ -309,7 +308,7 @@ class CompanyApiClient {
 
   async createDocumentTag(data: { name: string; slug: string; color?: string }): Promise<DocumentTag> {
     if (this.isMock) {
-      return { id: 'mock-tag', name: data.name, slug: data.slug, color: data.color || '#6B7280', documentCount: 0 };
+      return { id: 'mock-tag', name: data.name, slug: data.slug, color: data.color || '#6B7280' };
     }
     return this.request<DocumentTag>('/api/company/modules/documents/tags', {
       method: 'POST',
@@ -391,7 +390,7 @@ class CompanyApiClient {
   }
 
   async importCustomers(file: File): Promise<CsvImportResult> {
-    if (this.isMock) return { success: 0, failed: 0, errors: [] };
+    if (this.isMock) return { imported: 0, skipped: 0, errors: [] };
     const formData = new FormData();
     formData.append('file', file);
     return this.requestFormData<CsvImportResult>('/api/company/modules/masters/customers/import', formData);
@@ -456,7 +455,7 @@ class CompanyApiClient {
   }
 
   async importProducts(file: File): Promise<CsvImportResult> {
-    if (this.isMock) return { success: 0, failed: 0, errors: [] };
+    if (this.isMock) return { imported: 0, skipped: 0, errors: [] };
     const formData = new FormData();
     formData.append('file', file);
     return this.requestFormData<CsvImportResult>('/api/company/modules/masters/products/import', formData);
@@ -474,7 +473,7 @@ class CompanyApiClient {
 
   async createProductCategory(data: { name: string; slug: string }): Promise<ProductCategory> {
     if (this.isMock) {
-      return { id: 'mock-cat', name: data.name, slug: data.slug, productCount: 0 };
+      return { id: 'mock-cat', name: data.name, slug: data.slug, sortOrder: 0 };
     }
     return this.request<ProductCategory>('/api/company/modules/masters/products/categories', {
       method: 'POST',
@@ -744,7 +743,7 @@ class CompanyApiClient {
 
   async uploadOcrImage(file: File, sourceType?: string): Promise<OcrExtraction> {
     if (this.isMock) {
-      return { id: 'mock-ocr', imageUrl: '', sourceType: sourceType || 'fax', status: 'pending', extractedData: null, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() } as OcrExtraction;
+      return { id: 'mock-ocr', imageUrl: '', sourceType: sourceType || 'fax', status: 'pending', extractedData: null, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() } as unknown as OcrExtraction;
     }
     const formData = new FormData();
     formData.append('file', file);
@@ -754,7 +753,7 @@ class CompanyApiClient {
 
   async updateOcrExtraction(id: string, data: UpdateOcrExtractionRequest): Promise<OcrExtraction> {
     if (this.isMock) {
-      return { id, imageUrl: '', sourceType: 'fax', status: 'reviewed', extractedData: null, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() } as OcrExtraction;
+      return { id, imageUrl: '', sourceType: 'fax', status: 'reviewed', extractedData: null, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() } as unknown as OcrExtraction;
     }
     return this.request<OcrExtraction>(`/api/company/modules/orders/ocr/${id}`, {
       method: 'PUT',

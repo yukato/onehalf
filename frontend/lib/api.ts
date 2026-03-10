@@ -642,7 +642,7 @@ class ApiClient {
 
   async createCompanyDocumentTag(companySlug: string, data: { name: string; slug: string; color?: string }): Promise<DocumentTag> {
     if (this.isMock) {
-      return { id: 'mock-tag', name: data.name, slug: data.slug, color: data.color || '#6B7280', documentCount: 0 };
+      return { id: 'mock-tag', name: data.name, slug: data.slug, color: data.color || '#6B7280' };
     }
     return this.requestNextApi<DocumentTag>(`/api/admin/c/${companySlug}/documents/tags`, {
       method: 'POST',
@@ -743,7 +743,7 @@ class ApiClient {
   }
 
   async importCompanyCustomers(companySlug: string, file: File): Promise<CsvImportResult> {
-    if (this.isMock) return { success: 0, failed: 0, errors: [] };
+    if (this.isMock) return { imported: 0, skipped: 0, errors: [] };
     const formData = new FormData();
     formData.append('file', file);
     return this.requestNextApiFormData<CsvImportResult>(`/api/admin/c/${companySlug}/masters/customers/import`, formData);
@@ -807,7 +807,7 @@ class ApiClient {
   }
 
   async importCompanyProducts(companySlug: string, file: File): Promise<CsvImportResult> {
-    if (this.isMock) return { success: 0, failed: 0, errors: [] };
+    if (this.isMock) return { imported: 0, skipped: 0, errors: [] };
     const formData = new FormData();
     formData.append('file', file);
     return this.requestNextApiFormData<CsvImportResult>(`/api/admin/c/${companySlug}/masters/products/import`, formData);
@@ -824,7 +824,7 @@ class ApiClient {
 
   async createCompanyProductCategory(companySlug: string, data: { name: string; slug: string }): Promise<ProductCategory> {
     if (this.isMock) {
-      return { id: 'mock-cat', name: data.name, slug: data.slug, productCount: 0 };
+      return { id: 'mock-cat', name: data.name, slug: data.slug, sortOrder: 0 };
     }
     return this.requestNextApi<ProductCategory>(`/api/admin/c/${companySlug}/masters/products/categories`, {
       method: 'POST',
@@ -1071,14 +1071,14 @@ class ApiClient {
 
   async getCompanyOcrExtraction(companySlug: string, id: string): Promise<OcrExtraction> {
     if (this.isMock) {
-      return { id, imageUrl: '', sourceType: 'fax', status: 'pending', extractedData: null, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() } as OcrExtraction;
+      return { id, imageUrl: '', sourceType: 'fax', status: 'pending', extractedData: null, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() } as unknown as OcrExtraction;
     }
     return this.requestNextApi<OcrExtraction>(`/api/admin/c/${companySlug}/orders/ocr/${id}`);
   }
 
   async uploadCompanyOcrImage(companySlug: string, file: File, sourceType?: string): Promise<OcrExtraction> {
     if (this.isMock) {
-      return { id: 'mock-ocr', imageUrl: '', sourceType: sourceType || 'fax', status: 'pending', extractedData: null, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() } as OcrExtraction;
+      return { id: 'mock-ocr', imageUrl: '', sourceType: sourceType || 'fax', status: 'pending', extractedData: null, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() } as unknown as OcrExtraction;
     }
     const formData = new FormData();
     formData.append('file', file);
@@ -1088,7 +1088,7 @@ class ApiClient {
 
   async updateCompanyOcrExtraction(companySlug: string, id: string, data: UpdateOcrExtractionRequest): Promise<OcrExtraction> {
     if (this.isMock) {
-      return { id, imageUrl: '', sourceType: 'fax', status: 'reviewed', extractedData: null, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() } as OcrExtraction;
+      return { id, imageUrl: '', sourceType: 'fax', status: 'reviewed', extractedData: null, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() } as unknown as OcrExtraction;
     }
     return this.requestNextApi<OcrExtraction>(`/api/admin/c/${companySlug}/orders/ocr/${id}`, {
       method: 'PUT',
