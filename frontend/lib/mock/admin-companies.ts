@@ -1,0 +1,232 @@
+import type { Company, CompanyUser, CompanyModule, CompanyModuleAssignment, CompaniesResponse } from '@/types';
+
+// ---------- 企業一覧 ----------
+
+export const mockCompanies: Company[] = [
+  {
+    id: '1',
+    name: '株式会社八木厨房機器製作所',
+    slug: 'yagichu',
+    isActive: true,
+    createdAt: '2025-04-01T00:00:00.000Z',
+    updatedAt: '2026-02-01T00:00:00.000Z',
+  },
+  {
+    id: '2',
+    name: '株式会社大寅水産',
+    slug: 'daitora',
+    isActive: true,
+    createdAt: '2025-05-15T00:00:00.000Z',
+    updatedAt: '2026-01-20T00:00:00.000Z',
+  },
+  {
+    id: '3',
+    name: '丸善食品工業株式会社',
+    slug: 'maruzen-foods',
+    isActive: true,
+    createdAt: '2025-06-10T00:00:00.000Z',
+    updatedAt: '2026-02-10T00:00:00.000Z',
+  },
+  {
+    id: '4',
+    name: '株式会社山田水産加工',
+    slug: 'yamada-suisan',
+    isActive: true,
+    createdAt: '2025-07-01T00:00:00.000Z',
+    updatedAt: '2026-02-15T00:00:00.000Z',
+  },
+  {
+    id: '5',
+    name: '有限会社中村製麺所',
+    slug: 'nakamura-seimen',
+    isActive: false,
+    createdAt: '2025-08-20T00:00:00.000Z',
+    updatedAt: '2026-01-05T00:00:00.000Z',
+  },
+  {
+    id: '6',
+    name: '株式会社関西フードサービス',
+    slug: 'kansai-food',
+    isActive: true,
+    createdAt: '2025-09-01T00:00:00.000Z',
+    updatedAt: '2026-02-20T00:00:00.000Z',
+  },
+];
+
+// ---------- 企業ユーザー ----------
+
+export const mockCompanyUsers: CompanyUser[] = [
+  {
+    id: '1',
+    companyId: '1',
+    email: 'admin@yagichu.com',
+    username: '八木厨房 管理者',
+    role: 'admin',
+    isActive: true,
+    createdAt: '2025-04-01T00:00:00.000Z',
+    updatedAt: '2026-02-01T00:00:00.000Z',
+    lastLogin: '2026-02-28T09:00:00.000Z',
+    company: mockCompanies[0],
+  },
+  {
+    id: '2',
+    companyId: '1',
+    email: 'tanaka@yagichu.com',
+    username: '田中 太郎',
+    role: 'user',
+    isActive: true,
+    createdAt: '2025-05-01T00:00:00.000Z',
+    updatedAt: '2026-01-15T00:00:00.000Z',
+    lastLogin: '2026-02-27T14:30:00.000Z',
+    company: mockCompanies[0],
+  },
+  {
+    id: '3',
+    companyId: '2',
+    email: 'admin@daitora.com',
+    username: '大寅水産 管理者',
+    role: 'admin',
+    isActive: true,
+    createdAt: '2025-05-15T00:00:00.000Z',
+    updatedAt: '2026-01-20T00:00:00.000Z',
+    lastLogin: '2026-02-28T08:30:00.000Z',
+    company: mockCompanies[1],
+  },
+  {
+    id: '4',
+    companyId: '3',
+    email: 'admin@maruzen-foods.co.jp',
+    username: '丸善食品 管理者',
+    role: 'admin',
+    isActive: true,
+    createdAt: '2025-06-10T00:00:00.000Z',
+    updatedAt: '2026-02-10T00:00:00.000Z',
+    lastLogin: '2026-02-25T10:00:00.000Z',
+    company: mockCompanies[2],
+  },
+  {
+    id: '5',
+    companyId: '4',
+    email: 'admin@yamada-suisan.co.jp',
+    username: '山田 花子',
+    role: 'admin',
+    isActive: true,
+    createdAt: '2025-07-01T00:00:00.000Z',
+    updatedAt: '2026-02-15T00:00:00.000Z',
+    lastLogin: '2026-02-26T16:45:00.000Z',
+    company: mockCompanies[3],
+  },
+  {
+    id: '6',
+    companyId: '5',
+    email: 'admin@nakamura-seimen.co.jp',
+    username: '中村 一郎',
+    role: 'admin',
+    isActive: false,
+    createdAt: '2025-08-20T00:00:00.000Z',
+    updatedAt: '2026-01-05T00:00:00.000Z',
+    lastLogin: '2025-12-20T11:00:00.000Z',
+    company: mockCompanies[4],
+  },
+];
+
+// ---------- 企業モジュール ----------
+
+export const mockCompanyModules: CompanyModule[] = [
+  {
+    id: '1',
+    name: 'ダッシュボード',
+    slug: 'analytics',
+    description: 'データ分析・可視化ダッシュボード',
+    icon: 'chart',
+    sortOrder: 0,
+    isActive: true,
+    createdAt: '2025-04-01T00:00:00.000Z',
+    updatedAt: '2025-04-01T00:00:00.000Z',
+  },
+  {
+    id: '3',
+    name: '書類管理',
+    slug: 'documents',
+    description: '契約書・請求書などの書類管理機能',
+    icon: 'document',
+    sortOrder: 2,
+    isActive: true,
+    createdAt: '2025-04-01T00:00:00.000Z',
+    updatedAt: '2025-04-01T00:00:00.000Z',
+  },
+  {
+    id: '4',
+    name: 'マスタ管理',
+    slug: 'masters',
+    description: '取引先・商品マスタの管理',
+    icon: 'database',
+    sortOrder: 10,
+    isActive: true,
+    createdAt: '2025-04-01T00:00:00.000Z',
+    updatedAt: '2025-04-01T00:00:00.000Z',
+  },
+  {
+    id: '5',
+    name: '見積管理',
+    slug: 'quotations',
+    description: '見積書の作成・管理・承認ワークフロー',
+    icon: 'receipt',
+    sortOrder: 20,
+    isActive: true,
+    createdAt: '2025-04-01T00:00:00.000Z',
+    updatedAt: '2025-04-01T00:00:00.000Z',
+  },
+  {
+    id: '6',
+    name: '受注管理',
+    slug: 'orders',
+    description: '受注・売上の管理',
+    icon: 'chart',
+    sortOrder: 30,
+    isActive: true,
+    createdAt: '2025-04-01T00:00:00.000Z',
+    updatedAt: '2025-04-01T00:00:00.000Z',
+  },
+  {
+    id: '7',
+    name: '納品書',
+    slug: 'delivery-notes',
+    description: '納品書の発行・管理',
+    icon: 'truck',
+    sortOrder: 40,
+    isActive: true,
+    createdAt: '2025-04-01T00:00:00.000Z',
+    updatedAt: '2025-04-01T00:00:00.000Z',
+  },
+  {
+    id: '8',
+    name: '請求管理',
+    slug: 'invoices',
+    description: '請求書の作成・入金管理',
+    icon: 'money',
+    sortOrder: 50,
+    isActive: true,
+    createdAt: '2025-04-01T00:00:00.000Z',
+    updatedAt: '2025-04-01T00:00:00.000Z',
+  },
+];
+
+// ---------- モジュール割り当て (八木厨房機器製作所) ----------
+
+export const mockYagichuModuleAssignments: CompanyModuleAssignment[] = [
+  { id: '1', companyId: '1', moduleId: '1', module: mockCompanyModules[0], isActive: true, config: null, createdAt: '2025-04-01T00:00:00.000Z', updatedAt: '2025-04-01T00:00:00.000Z' },
+  { id: '3', companyId: '1', moduleId: '3', module: mockCompanyModules[1], isActive: true, config: null, createdAt: '2025-04-01T00:00:00.000Z', updatedAt: '2025-04-01T00:00:00.000Z' },
+  { id: '4', companyId: '1', moduleId: '4', module: mockCompanyModules[2], isActive: true, config: null, createdAt: '2025-04-01T00:00:00.000Z', updatedAt: '2025-04-01T00:00:00.000Z' },
+  { id: '5', companyId: '1', moduleId: '5', module: mockCompanyModules[3], isActive: true, config: null, createdAt: '2025-04-01T00:00:00.000Z', updatedAt: '2025-04-01T00:00:00.000Z' },
+  { id: '6', companyId: '1', moduleId: '6', module: mockCompanyModules[4], isActive: true, config: null, createdAt: '2025-04-01T00:00:00.000Z', updatedAt: '2025-04-01T00:00:00.000Z' },
+  { id: '7', companyId: '1', moduleId: '7', module: mockCompanyModules[5], isActive: true, config: null, createdAt: '2025-04-01T00:00:00.000Z', updatedAt: '2025-04-01T00:00:00.000Z' },
+  { id: '8', companyId: '1', moduleId: '8', module: mockCompanyModules[6], isActive: true, config: null, createdAt: '2025-04-01T00:00:00.000Z', updatedAt: '2025-04-01T00:00:00.000Z' },
+];
+
+// ---------- レスポンス ----------
+
+export const mockCompaniesResponse: CompaniesResponse = {
+  companies: mockCompanies,
+  total: mockCompanies.length,
+};
