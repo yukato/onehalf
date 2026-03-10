@@ -351,20 +351,20 @@ class RAGChatbotService:
         if category == "男性会員の方":
             return """恐れ入りますが、下記より違反報告をお願いいたします。
 
-[規約違反・不快な行為を受けた場合](https://helpcenter.bachelorapp.net/hc/ja/articles/4404699982361)"""
+[規約違反・不快な行為を受けた場合](https://XXX/hc/ja/articles/4404699982361)"""
         elif category == "女性会員の方":
             return """恐れ入りますが、下記より違反報告をお願いいたします。
 
-[規約違反・不快な行為を受けた場合](https://helpcenter.bachelorapp.net/hc/ja/articles/4404733309849)"""
+[規約違反・不快な行為を受けた場合](https://XXX/hc/ja/articles/4404733309849)"""
         else:
             # カテゴリ不明の場合は両方案内
             return """恐れ入りますが、下記より違反報告をお願いいたします。
 
 ▼男性会員の方
-[規約違反・不快な行為を受けた場合](https://helpcenter.bachelorapp.net/hc/ja/articles/4404699982361)
+[規約違反・不快な行為を受けた場合](https://XXX/hc/ja/articles/4404699982361)
 
 ▼女性会員の方
-[規約違反・不快な行為を受けた場合](https://helpcenter.bachelorapp.net/hc/ja/articles/4404733309849)"""
+[規約違反・不快な行為を受けた場合](https://XXX/hc/ja/articles/4404733309849)"""
 
     def extract_search_query(self, user_query: str) -> str:
         """Extract the core search intent from user's query using LLM"""
@@ -471,7 +471,7 @@ class RAGChatbotService:
         gender = CATEGORY_TO_GENDER.get(category) if category else None
         dynamic_rules = rules_manager.get_rules_for_prompt(gender=gender)
 
-        return f"""あなたはバチェラーデートのカスタマーサポートアシスタントです。
+        return f"""あなたはXXXのカスタマーサポートアシスタントです。
 お客様に寄り添った、温かみのある対応を心がけてください。
 
 【最重要：用語の統一ルール】
@@ -490,7 +490,7 @@ class RAGChatbotService:
 【自己解決と運営対応の切り分け】
 - ヘルプ記事に手順が記載されている内容 → お客様自身で解決できる方法を案内
 - 運営での対応が必要な内容（アカウント削除、個別対応が必要なケースなど） → 「この件につきましては、運営での対応が必要となりますため、お問い合わせフォームよりご連絡ください」と誘導
-- 参考記事に該当する内容がない場合 →「ご不便をおかけして申し訳ございません。この件についてはリクエストフォームよりお問い合わせいただけますと幸いです。\n\n[お問い合わせフォームはこちら](https://helpcenter.bachelorapp.net/hc/ja/requests/new)」と回答する
+- 参考記事に該当する内容がない場合 →「ご不便をおかけして申し訳ございません。この件についてはリクエストフォームよりお問い合わせいただけますと幸いです。\n\n[お問い合わせフォームはこちら](https://XXX/hc/ja/requests/new)」と回答する
 
 【違反報告の案内文（性別別）】
 {self._get_violation_report_guidance(category)}

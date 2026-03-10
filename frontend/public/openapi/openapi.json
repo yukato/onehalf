@@ -1,0 +1,1881 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "onehalf API",
+    "version": "0.1.0",
+    "description": "Generated from zod contracts in scripts/openapi/contracts"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3100"
+    }
+  ],
+  "paths": {
+    "/api/admin/auth/login": {
+      "post": {
+        "operationId": "adminLogin",
+        "summary": "Admin login",
+        "description": "Authenticate an admin user with email and password. Returns a JWT access token and sets a refresh token cookie.",
+        "tags": [
+          "Admin Auth"
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "Login credentials",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "email",
+                  "password"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "access_token": {
+                      "type": "string"
+                    },
+                    "token_type": {
+                      "type": "string",
+                      "const": "bearer"
+                    },
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "username": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string",
+                          "format": "email",
+                          "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+                        },
+                        "role": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "username",
+                        "email",
+                        "role"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "access_token",
+                    "token_type",
+                    "user"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing email or password",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "detail": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "detail"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "detail": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "detail"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "detail": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "detail"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/auth/me": {
+      "get": {
+        "operationId": "adminMe",
+        "summary": "Get current admin user",
+        "description": "Returns the currently authenticated admin user profile. Requires Bearer token in Authorization header.",
+        "tags": [
+          "Admin Auth"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current user info",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "username": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "email",
+                              "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "role": {
+                          "type": "string"
+                        },
+                        "isActive": {
+                          "type": "boolean"
+                        },
+                        "createdAt": {
+                          "type": "string"
+                        },
+                        "lastLogin": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "username",
+                        "email",
+                        "role"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "user"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "detail": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "detail"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "detail": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "detail"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/company/auth/login": {
+      "post": {
+        "operationId": "companyLogin",
+        "summary": "Company user login",
+        "description": "Authenticate a company user with email and password. Returns a JWT access token, the company slug, user profile with company info, and sets a refresh token cookie.",
+        "tags": [
+          "Company Auth"
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "Login credentials",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "email",
+                  "password"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "access_token": {
+                      "type": "string"
+                    },
+                    "token_type": {
+                      "type": "string",
+                      "const": "bearer"
+                    },
+                    "companySlug": {
+                      "type": "string"
+                    },
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "username": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string",
+                          "format": "email",
+                          "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+                        },
+                        "role": {
+                          "type": "string"
+                        },
+                        "company": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "slug": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name",
+                            "slug"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "username",
+                        "email",
+                        "role",
+                        "company"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "access_token",
+                    "token_type",
+                    "companySlug",
+                    "user"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing email or password",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "detail": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "detail"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "detail": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "detail"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "detail": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "detail"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/company/auth/me": {
+      "get": {
+        "operationId": "companyMe",
+        "summary": "Get current company user",
+        "description": "Returns the currently authenticated company user profile including company info. Requires Bearer token in Authorization header.",
+        "tags": [
+          "Company Auth"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current user info",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "username": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "email",
+                              "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "role": {
+                          "type": "string"
+                        },
+                        "isActive": {
+                          "type": "boolean"
+                        },
+                        "createdAt": {
+                          "type": "string"
+                        },
+                        "lastLogin": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "company": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "slug": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name",
+                            "slug"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "username",
+                        "email",
+                        "role",
+                        "company"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "user"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "detail": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "detail"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "detail": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "detail"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/company/modules/orders": {
+      "get": {
+        "operationId": "listOrders",
+        "summary": "List orders",
+        "description": "Retrieve a paginated list of orders for the authenticated company. Supports filtering by customer, status, order type, and free-text search.",
+        "tags": [
+          "Company Orders"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "customerId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "confirmed",
+                "in_production",
+                "ready",
+                "partially_delivered",
+                "delivered",
+                "completed",
+                "cancelled"
+              ]
+            }
+          },
+          {
+            "name": "orderType",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "general",
+                "repair",
+                "machine",
+                "small_item"
+              ]
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated order list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "orders": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "orderNumber": {
+                            "type": "string"
+                          },
+                          "salesNumber": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "customerId": {
+                            "type": "string"
+                          },
+                          "customer": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "code": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "code"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "quotationId": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "orderDate": {
+                            "type": "string"
+                          },
+                          "deliveryDate": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "subtotal": {
+                            "type": "number"
+                          },
+                          "taxAmount": {
+                            "type": "number"
+                          },
+                          "totalAmount": {
+                            "type": "number"
+                          },
+                          "notes": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "internalMemo": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "status": {
+                            "type": "string"
+                          },
+                          "orderType": {
+                            "type": "string"
+                          },
+                          "customFields": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "additionalProperties": {}
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "createdByName": {
+                            "type": "string"
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          },
+                          "updatedAt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "orderNumber",
+                          "salesNumber",
+                          "customerId",
+                          "customer",
+                          "quotationId",
+                          "orderDate",
+                          "deliveryDate",
+                          "subtotal",
+                          "taxAmount",
+                          "totalAmount",
+                          "notes",
+                          "internalMemo",
+                          "status",
+                          "orderType",
+                          "customFields",
+                          "createdByName",
+                          "createdAt",
+                          "updatedAt"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "total": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "orders",
+                    "total"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "detail": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "detail"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "detail": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "detail"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createOrder",
+        "summary": "Create an order",
+        "description": "Create a new order for the authenticated company. Order number and sales number are generated automatically. Amounts are calculated from items.",
+        "tags": [
+          "Company Orders"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "Order data with line items",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "customerId": {
+                    "type": "string"
+                  },
+                  "quotationId": {
+                    "type": "string"
+                  },
+                  "orderDate": {
+                    "type": "string"
+                  },
+                  "deliveryDate": {
+                    "type": "string"
+                  },
+                  "notes": {
+                    "type": "string"
+                  },
+                  "internalMemo": {
+                    "type": "string"
+                  },
+                  "orderType": {
+                    "type": "string",
+                    "enum": [
+                      "general",
+                      "repair",
+                      "machine",
+                      "small_item"
+                    ]
+                  },
+                  "customFields": {
+                    "type": "object",
+                    "additionalProperties": {}
+                  },
+                  "items": {
+                    "minItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "productId": {
+                          "type": "string"
+                        },
+                        "productCode": {
+                          "type": "string"
+                        },
+                        "productName": {
+                          "type": "string"
+                        },
+                        "quantity": {
+                          "type": "number"
+                        },
+                        "unit": {
+                          "type": "string"
+                        },
+                        "unitPrice": {
+                          "type": "number"
+                        },
+                        "taxRate": {
+                          "type": "number"
+                        },
+                        "notes": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "productName",
+                        "quantity",
+                        "unitPrice"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "customerId",
+                  "orderDate",
+                  "items"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Order created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "orderNumber": {
+                      "type": "string"
+                    },
+                    "salesNumber": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "customerId": {
+                      "type": "string"
+                    },
+                    "customer": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "code"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "quotationId": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "orderDate": {
+                      "type": "string"
+                    },
+                    "deliveryDate": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "subtotal": {
+                      "type": "number"
+                    },
+                    "taxAmount": {
+                      "type": "number"
+                    },
+                    "totalAmount": {
+                      "type": "number"
+                    },
+                    "notes": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "internalMemo": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "orderType": {
+                      "type": "string"
+                    },
+                    "customFields": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "additionalProperties": {}
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "createdByName": {
+                      "type": "string"
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "type": "string"
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "sortOrder": {
+                            "type": "number"
+                          },
+                          "productId": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "productCode": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "productName": {
+                            "type": "string"
+                          },
+                          "quantity": {
+                            "type": "number"
+                          },
+                          "deliveredQuantity": {
+                            "type": "number"
+                          },
+                          "unit": {
+                            "type": "string"
+                          },
+                          "unitPrice": {
+                            "type": "number"
+                          },
+                          "taxRate": {
+                            "type": "number"
+                          },
+                          "amount": {
+                            "type": "number"
+                          },
+                          "notes": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "sortOrder",
+                          "productId",
+                          "productCode",
+                          "productName",
+                          "quantity",
+                          "deliveredQuantity",
+                          "unit",
+                          "unitPrice",
+                          "taxRate",
+                          "amount",
+                          "notes"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "orderNumber",
+                    "salesNumber",
+                    "customerId",
+                    "customer",
+                    "quotationId",
+                    "orderDate",
+                    "deliveryDate",
+                    "subtotal",
+                    "taxAmount",
+                    "totalAmount",
+                    "notes",
+                    "internalMemo",
+                    "status",
+                    "orderType",
+                    "customFields",
+                    "createdByName",
+                    "createdAt",
+                    "updatedAt",
+                    "items"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "detail": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "detail"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "detail": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "detail"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "detail": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "detail"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/company/modules/quotations": {
+      "get": {
+        "operationId": "listQuotations",
+        "summary": "List quotations",
+        "description": "Retrieve a paginated list of quotations for the authenticated company. Supports filtering by customer, status, and free-text search.",
+        "tags": [
+          "Company Quotations"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "customerId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "draft",
+                "sent",
+                "approved",
+                "rejected",
+                "expired"
+              ]
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated quotation list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "quotations": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "quotationNumber": {
+                            "type": "string"
+                          },
+                          "customerId": {
+                            "type": "string"
+                          },
+                          "customer": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "code": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "code"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "subject": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "quotationDate": {
+                            "type": "string"
+                          },
+                          "validUntil": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "subtotal": {
+                            "type": "number"
+                          },
+                          "taxAmount": {
+                            "type": "number"
+                          },
+                          "totalAmount": {
+                            "type": "number"
+                          },
+                          "notes": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "internalMemo": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "status": {
+                            "type": "string"
+                          },
+                          "createdByName": {
+                            "type": "string"
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          },
+                          "updatedAt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "quotationNumber",
+                          "customerId",
+                          "customer",
+                          "subject",
+                          "quotationDate",
+                          "validUntil",
+                          "subtotal",
+                          "taxAmount",
+                          "totalAmount",
+                          "notes",
+                          "internalMemo",
+                          "status",
+                          "createdByName",
+                          "createdAt",
+                          "updatedAt"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "total": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "quotations",
+                    "total"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "detail": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "detail"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "detail": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "detail"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createQuotation",
+        "summary": "Create a quotation",
+        "description": "Create a new quotation for the authenticated company. Quotation number is generated automatically. Amounts are calculated from items.",
+        "tags": [
+          "Company Quotations"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "Quotation data with line items",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "customerId": {
+                    "type": "string"
+                  },
+                  "subject": {
+                    "type": "string"
+                  },
+                  "quotationDate": {
+                    "type": "string"
+                  },
+                  "validUntil": {
+                    "type": "string"
+                  },
+                  "notes": {
+                    "type": "string"
+                  },
+                  "internalMemo": {
+                    "type": "string"
+                  },
+                  "items": {
+                    "minItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "productId": {
+                          "type": "string"
+                        },
+                        "productCode": {
+                          "type": "string"
+                        },
+                        "productName": {
+                          "type": "string"
+                        },
+                        "quantity": {
+                          "type": "number"
+                        },
+                        "unit": {
+                          "type": "string"
+                        },
+                        "unitPrice": {
+                          "type": "number"
+                        },
+                        "taxRate": {
+                          "type": "number"
+                        },
+                        "notes": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "productName",
+                        "quantity",
+                        "unitPrice"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "customerId",
+                  "quotationDate",
+                  "items"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Quotation created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "quotationNumber": {
+                      "type": "string"
+                    },
+                    "customerId": {
+                      "type": "string"
+                    },
+                    "customer": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "code": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "code"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "subject": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "quotationDate": {
+                      "type": "string"
+                    },
+                    "validUntil": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "subtotal": {
+                      "type": "number"
+                    },
+                    "taxAmount": {
+                      "type": "number"
+                    },
+                    "totalAmount": {
+                      "type": "number"
+                    },
+                    "notes": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "internalMemo": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "createdByName": {
+                      "type": "string"
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "type": "string"
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "sortOrder": {
+                            "type": "number"
+                          },
+                          "productId": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "productCode": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "productName": {
+                            "type": "string"
+                          },
+                          "quantity": {
+                            "type": "number"
+                          },
+                          "unit": {
+                            "type": "string"
+                          },
+                          "unitPrice": {
+                            "type": "number"
+                          },
+                          "taxRate": {
+                            "type": "number"
+                          },
+                          "amount": {
+                            "type": "number"
+                          },
+                          "notes": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "sortOrder",
+                          "productId",
+                          "productCode",
+                          "productName",
+                          "quantity",
+                          "unit",
+                          "unitPrice",
+                          "taxRate",
+                          "amount",
+                          "notes"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "quotationNumber",
+                    "customerId",
+                    "customer",
+                    "subject",
+                    "quotationDate",
+                    "validUntil",
+                    "subtotal",
+                    "taxAmount",
+                    "totalAmount",
+                    "notes",
+                    "internalMemo",
+                    "status",
+                    "createdByName",
+                    "createdAt",
+                    "updatedAt",
+                    "items"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "detail": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "detail"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "detail": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "detail"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "detail": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "detail"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
