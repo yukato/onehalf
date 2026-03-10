@@ -10,6 +10,8 @@ import { QuotationList } from '@/components/quotations/QuotationList';
 const QuotationForm = dynamic(() => import('@/components/quotations/QuotationForm').then(m => m.QuotationForm));
 const QuotationDetail = dynamic(() => import('@/components/quotations/QuotationDetail').then(m => m.QuotationDetail));
 import { ShareLinkModal } from '@/components/quotations/ShareLinkModal';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
+import { openQuotationPdf } from '@/lib/pdf/generate-quotation-pdf';
 import type { Quotation, QuotationStatus } from '@/types';
 
 const PAGE_SIZE = 50;
@@ -38,8 +40,10 @@ export default function AdminQuotationsPage() {
 
   // Modals
   const [showForm, setShowForm] = useState(false);
+  const [editingQuotation, setEditingQuotation] = useState<Quotation | null>(null);
   const [detailQuotation, setDetailQuotation] = useState<Quotation | null>(null);
   const [shareTarget, setShareTarget] = useState<{ id: string; number: string } | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{ title: string; message: string; variant?: 'primary' | 'danger'; onConfirm: () => void } | null>(null);
 
   const loadQuotations = useCallback(async (status?: StatusFilter, query?: string, newOffset?: number) => {
     try {
@@ -91,29 +95,42 @@ export default function AdminQuotationsPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('この見積書を削除しますか？')) return;
-    try {
-      await api.deleteCompanyQuotation(companySlug, id);
-      await loadQuotations(statusFilter, searchQuery, offset);
-    } catch (err) {
-      console.error('Failed to delete quotation:', err);
-    }
+  const handleDelete = (id: string) => {
+    setConfirmAction({
+      title: '見積書の削除',
+      message: 'この見積書を削除しますか？\nこの操作は取り消せません。',
+      variant: 'danger',
+      onConfirm: async () => {
+        setConfirmAction(null);
+        try {
+          await api.deleteCompanyQuotation(companySlug, id);
+          await loadQuotations(statusFilter, searchQuery, offset);
+        } catch (err) {
+          console.error('Failed to delete quotation:', err);
+        }
+      },
+    });
   };
 
   const handleShare = (quotation: Omit<Quotation, 'items'>) => {
     setShareTarget({ id: quotation.id, number: quotation.quotationNumber });
   };
 
-  const handleConvert = async (id: string) => {
-    if (!confirm('この見積書を受注に変換しますか？')) return;
-    try {
-      await api.convertCompanyQuotation(companySlug, id);
-      await loadQuotations(statusFilter, searchQuery, offset);
-      setDetailQuotation(null);
-    } catch (err) {
-      console.error('Failed to convert quotation:', err);
-    }
+  const handleConvert = (id: string) => {
+    setConfirmAction({
+      title: '受注に変換',
+      message: 'この見積書を受注に変換しますか？\n見積書のステータスは変更されません。',
+      onConfirm: async () => {
+        setConfirmAction(null);
+        try {
+          await api.convertCompanyQuotation(companySlug, id);
+          await loadQuotations(statusFilter, searchQuery, offset);
+          setDetailQuotation(null);
+        } catch (err) {
+          console.error('Failed to convert quotation:', err);
+        }
+      },
+    });
   };
 
   const handleStatusUpdate = async (id: string, status: string) => {
@@ -127,8 +144,16 @@ export default function AdminQuotationsPage() {
 
   const handleFormSaved = () => {
     setShowForm(false);
+    setEditingQuotation(null);
     loadQuotations(statusFilter, searchQuery, 0);
     setOffset(0);
+  };
+
+  const handleEditFromDetail = () => {
+    if (detailQuotation) {
+      setEditingQuotation(detailQuotation);
+      setDetailQuotation(null);
+    }
   };
 
   if (isLoading) {
@@ -210,17 +235,41 @@ export default function AdminQuotationsPage() {
         />
       )}
 
+      {/* Edit Form Modal */}
+      {editingQuotation && (
+        <QuotationForm
+          initialData={editingQuotation}
+          onSave={handleFormSaved}
+          onClose={() => setEditingQuotation(null)}
+        />
+      )}
+
       {/* Detail Modal */}
       {detailQuotation && (
         <QuotationDetail
           quotation={detailQuotation}
           onClose={() => setDetailQuotation(null)}
+          onEdit={handleEditFromDetail}
           onShare={() => {
             setShareTarget({ id: detailQuotation.id, number: detailQuotation.quotationNumber });
           }}
           onConvert={() => handleConvert(detailQuotation.id)}
-          onPdf={() => {
-            window.open(api.getCompanyQuotationPdfUrl(companySlug, detailQuotation.id), '_blank');
+          onPdf={async () => {
+            if (process.env.NEXT_PUBLIC_AUTH_MOCK === 'true') {
+              await openQuotationPdf(detailQuotation);
+            } else {
+              window.open(api.getCompanyQuotationPdfUrl(companySlug, detailQuotation.id), '_blank');
+            }
+            if (detailQuotation.status === 'draft') {
+              await handleStatusUpdate(detailQuotation.id, 'sent');
+              const updated = await api.getCompanyQuotation(companySlug, detailQuotation.id);
+              setDetailQuotation(updated);
+            }
+          }}
+          onStatusChange={async (id, status) => {
+            await handleStatusUpdate(id, status);
+            const updated = await api.getCompanyQuotation(companySlug, id);
+            setDetailQuotation(updated);
           }}
         />
       )}
@@ -231,6 +280,26 @@ export default function AdminQuotationsPage() {
           quotationId={shareTarget.id}
           quotationNumber={shareTarget.number}
           onClose={() => setShareTarget(null)}
+          onLinkCreated={async () => {
+            await handleStatusUpdate(shareTarget.id, 'sent');
+            await loadQuotations(statusFilter, searchQuery, offset);
+            if (detailQuotation && detailQuotation.id === shareTarget.id) {
+              const updated = await api.getCompanyQuotation(companySlug, shareTarget.id);
+              setDetailQuotation(updated);
+            }
+          }}
+        />
+      )}
+
+      {/* Confirm Modal */}
+      {confirmAction && (
+        <ConfirmModal
+          title={confirmAction.title}
+          message={confirmAction.message}
+          variant={confirmAction.variant}
+          confirmLabel="実行"
+          onConfirm={confirmAction.onConfirm}
+          onCancel={() => setConfirmAction(null)}
         />
       )}
     </div>

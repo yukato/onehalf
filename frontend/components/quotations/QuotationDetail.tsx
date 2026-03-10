@@ -1,23 +1,40 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { formatCurrency } from '@/components/ui/AmountDisplay';
-import type { Quotation } from '@/types';
+import type { Quotation, QuotationStatus } from '@/types';
+
+const NEXT_STATUS: Partial<Record<QuotationStatus, { status: QuotationStatus; label: string }>> = {
+  sent: { status: 'approved', label: '承認済にする' },
+};
 
 interface QuotationDetailProps {
   quotation: Quotation;
   onClose: () => void;
+  onEdit?: () => void;
   onShare: () => void;
   onConvert: () => void;
-  onPdf: () => void;
+  onPdf: () => void | Promise<void>;
+  onStatusChange?: (id: string, status: string) => void;
 }
 
-export const QuotationDetail = React.memo(function QuotationDetail({ quotation, onClose, onShare, onConvert, onPdf }: QuotationDetailProps) {
+export const QuotationDetail = React.memo(function QuotationDetail({ quotation, onClose, onEdit, onShare, onConvert, onPdf, onStatusChange }: QuotationDetailProps) {
+  const [isPdfGenerating, setIsPdfGenerating] = useState(false);
+  const nextStatus = NEXT_STATUS[quotation.status as QuotationStatus];
+
+  const handlePdf = async () => {
+    setIsPdfGenerating(true);
+    try {
+      await onPdf();
+    } finally {
+      setIsPdfGenerating(false);
+    }
+  };
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 pt-10" onClick={onClose}>
       <div
-        className="bg-white rounded-lg shadow-xl max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+        className="bg-white rounded-lg shadow-xl max-w-5xl w-full mx-4 max-h-[85vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -35,14 +52,33 @@ export const QuotationDetail = React.memo(function QuotationDetail({ quotation, 
 
         {/* Actions */}
         <div className="flex items-center gap-2 px-6 py-3 border-b border-gray-100 bg-gray-50">
+          {onEdit && quotation.status === 'draft' && (
+            <button
+              onClick={onEdit}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-white bg-primary rounded-lg hover:bg-primary/90 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              編集
+            </button>
+          )}
           <button
-            onClick={onPdf}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            onClick={handlePdf}
+            disabled={isPdfGenerating}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            PDF出力
+            {isPdfGenerating ? (
+              <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+            ) : (
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            )}
+            {isPdfGenerating ? 'PDF生成中...' : 'PDF出力'}
           </button>
           <button
             onClick={onShare}
@@ -53,6 +89,17 @@ export const QuotationDetail = React.memo(function QuotationDetail({ quotation, 
             </svg>
             共有リンク
           </button>
+          {nextStatus && onStatusChange && (
+            <button
+              onClick={() => onStatusChange(quotation.id, nextStatus.status)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+              {nextStatus.label}
+            </button>
+          )}
           {quotation.status === 'approved' && (
             <button
               onClick={onConvert}
@@ -107,6 +154,7 @@ export const QuotationDetail = React.memo(function QuotationDetail({ quotation, 
                   <th className="text-left px-4 py-2 text-xs font-medium text-gray-500">単位</th>
                   <th className="text-right px-4 py-2 text-xs font-medium text-gray-500">単価</th>
                   <th className="text-right px-4 py-2 text-xs font-medium text-gray-500">金額</th>
+                  <th className="text-left px-4 py-2 text-xs font-medium text-gray-500">備考</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -123,6 +171,7 @@ export const QuotationDetail = React.memo(function QuotationDetail({ quotation, 
                     <td className="px-4 py-2 text-sm text-gray-500">{item.unit}</td>
                     <td className="px-4 py-2 text-sm text-gray-900 text-right">{formatCurrency(item.unitPrice)}</td>
                     <td className="px-4 py-2 text-sm text-gray-900 text-right font-medium">{formatCurrency(item.amount)}</td>
+                    <td className="px-4 py-2 text-xs text-gray-500 max-w-[200px] truncate">{item.notes || ''}</td>
                   </tr>
                 ))}
               </tbody>
