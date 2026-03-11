@@ -44,6 +44,7 @@ export function ProductList({ products, total, offset, limit, onPageChange, onEd
             <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">カテゴリ</th>
             <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">単位</th>
             <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase">単価</th>
+            <th className="text-right px-4 py-3 text-xs font-medium text-orange-600 uppercase">原価</th>
             <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase">操作</th>
           </tr>
         </thead>
@@ -72,6 +73,13 @@ export function ProductList({ products, total, offset, limit, onPageChange, onEd
               </td>
               <td className="px-4 py-3 text-sm text-gray-500">{product.unit}</td>
               <td className="px-4 py-3 text-sm text-gray-900 text-right font-mono">{formatPrice(product.unitPrice)}</td>
+              <td className="px-4 py-3 text-sm text-right font-mono">
+                {product.costPrice > 0 ? (
+                  <span className="text-orange-700">{formatPrice(product.costPrice)}</span>
+                ) : (
+                  <span className="text-gray-300">—</span>
+                )}
+              </td>
               <td className="px-4 py-3 text-right relative">
                 <button
                   onClick={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === product.id ? null : product.id); }}

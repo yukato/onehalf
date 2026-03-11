@@ -597,6 +597,11 @@ export interface CsvImportResult {
 
 export type QuotationStatus = 'draft' | 'sent' | 'approved' | 'rejected' | 'expired';
 
+export interface CostPart {
+  name: string;
+  unitPrice: number;
+}
+
 export interface QuotationItem {
   id: string;
   sortOrder: number;
@@ -606,6 +611,8 @@ export interface QuotationItem {
   quantity: number;
   unit: string;
   unitPrice: number;
+  costPrice: number;
+  costParts: CostPart[];
   taxRate: number;
   amount: number;
   notes: string | null;
@@ -643,6 +650,8 @@ export interface CreateQuotationItemInput {
   quantity: number;
   unit?: string;
   unitPrice: number;
+  costPrice?: number;
+  costParts?: CostPart[];
   taxRate?: number;
   notes?: string;
 }

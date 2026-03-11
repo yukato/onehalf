@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { formatCurrency } from '@/components/ui/AmountDisplay';
-import type { Quotation, QuotationStatus } from '@/types';
+import type { Quotation, QuotationStatus, QuotationItem } from '@/types';
 
 const NEXT_STATUS: Partial<Record<QuotationStatus, { status: QuotationStatus; label: string }>> = {
   sent: { status: 'approved', label: '承認済にする' },
@@ -21,7 +21,25 @@ interface QuotationDetailProps {
 
 export const QuotationDetail = React.memo(function QuotationDetail({ quotation, onClose, onEdit, onShare, onConvert, onPdf, onStatusChange }: QuotationDetailProps) {
   const [isPdfGenerating, setIsPdfGenerating] = useState(false);
+  const [expandedCostRows, setExpandedCostRows] = useState<Set<string>>(new Set());
   const nextStatus = NEXT_STATUS[quotation.status as QuotationStatus];
+
+  const toggleCostDetail = (itemId: string) => {
+    setExpandedCostRows(prev => {
+      const next = new Set(prev);
+      if (next.has(itemId)) next.delete(itemId);
+      else next.add(itemId);
+      return next;
+    });
+  };
+
+  const getItemCost = (item: QuotationItem) => item.costPrice * item.quantity;
+  const getItemProfit = (item: QuotationItem) => item.amount - getItemCost(item);
+  const getProfitRate = (amount: number, cost: number) => amount > 0 ? ((amount - cost) / amount * 100) : 0;
+
+  const totalCost = quotation.items.reduce((s, item) => s + getItemCost(item), 0);
+  const totalProfit = quotation.subtotal - totalCost;
+  const totalProfitRate = quotation.subtotal > 0 ? (totalProfit / quotation.subtotal * 100) : 0;
 
   const handlePdf = async () => {
     setIsPdfGenerating(true);
@@ -34,7 +52,7 @@ export const QuotationDetail = React.memo(function QuotationDetail({ quotation, 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 pt-10" onClick={onClose}>
       <div
-        className="bg-white rounded-lg shadow-xl max-w-5xl w-full mx-4 max-h-[85vh] overflow-y-auto"
+        className="bg-white rounded-lg shadow-xl max-w-7xl w-full mx-4 max-h-[85vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -148,38 +166,112 @@ export const QuotationDetail = React.memo(function QuotationDetail({ quotation, 
             <table className="w-full">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="text-left px-4 py-2 text-xs font-medium text-gray-500">#</th>
-                  <th className="text-left px-4 py-2 text-xs font-medium text-gray-500">商品名</th>
-                  <th className="text-right px-4 py-2 text-xs font-medium text-gray-500">数量</th>
-                  <th className="text-left px-4 py-2 text-xs font-medium text-gray-500">単位</th>
-                  <th className="text-right px-4 py-2 text-xs font-medium text-gray-500">単価</th>
-                  <th className="text-right px-4 py-2 text-xs font-medium text-gray-500">金額</th>
-                  <th className="text-left px-4 py-2 text-xs font-medium text-gray-500">備考</th>
+                  <th className="text-left px-3 py-2 text-xs font-medium text-gray-500">#</th>
+                  <th className="text-left px-3 py-2 text-xs font-medium text-gray-500">商品名</th>
+                  <th className="text-right px-3 py-2 text-xs font-medium text-gray-500">数量</th>
+                  <th className="text-left px-2 py-2 text-xs font-medium text-gray-500">単位</th>
+                  <th className="text-right px-3 py-2 text-xs font-medium text-gray-500">単価</th>
+                  <th className="text-right px-3 py-2 text-xs font-medium text-gray-500">金額</th>
+                  <th className="text-right px-3 py-2 text-xs font-medium text-orange-600 bg-orange-50/50">原価</th>
+                  <th className="text-right px-3 py-2 text-xs font-medium text-green-700 bg-green-50/50">利益</th>
+                  <th className="text-left px-3 py-2 text-xs font-medium text-gray-500">備考</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {quotation.items.map((item, index) => (
-                  <tr key={item.id} className={index % 2 === 1 ? 'bg-gray-50/50' : ''}>
-                    <td className="px-4 py-2 text-sm text-gray-400">{index + 1}</td>
-                    <td className="px-4 py-2 text-sm text-gray-900">
-                      {item.productName}
-                      {item.productCode && (
-                        <span className="ml-2 text-xs text-gray-400 font-mono">{item.productCode}</span>
+                {quotation.items.map((item, index) => {
+                  const itemCost = getItemCost(item);
+                  const itemProfit = getItemProfit(item);
+                  const profitRate = getProfitRate(item.amount, itemCost);
+                  const hasCostParts = item.costParts && item.costParts.length > 0;
+                  const isExpanded = expandedCostRows.has(item.id);
+
+                  return (
+                    <React.Fragment key={item.id}>
+                      <tr className={index % 2 === 1 ? 'bg-gray-50/50' : ''}>
+                        <td className="px-3 py-2 text-sm text-gray-400">{index + 1}</td>
+                        <td className="px-3 py-2 text-sm text-gray-900">
+                          {item.productName}
+                          {item.productCode && (
+                            <span className="ml-2 text-xs text-gray-400 font-mono">{item.productCode}</span>
+                          )}
+                        </td>
+                        <td className="px-3 py-2 text-sm text-gray-900 text-right">{item.quantity}</td>
+                        <td className="px-2 py-2 text-sm text-gray-500">{item.unit}</td>
+                        <td className="px-3 py-2 text-sm text-gray-900 text-right">{formatCurrency(item.unitPrice)}</td>
+                        <td className="px-3 py-2 text-sm text-gray-900 text-right font-medium">{formatCurrency(item.amount)}</td>
+                        <td className="px-3 py-2 text-sm text-right bg-orange-50/30">
+                          {item.costPrice > 0 ? (
+                            <span className="text-orange-700">
+                              {hasCostParts && (
+                                <button
+                                  onClick={() => toggleCostDetail(item.id)}
+                                  className="inline-flex items-center mr-1 text-orange-400 hover:text-orange-600"
+                                >
+                                  <svg className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                  </svg>
+                                </button>
+                              )}
+                              {formatCurrency(itemCost)}
+                            </span>
+                          ) : (
+                            <span className="text-gray-300">—</span>
+                          )}
+                        </td>
+                        <td className="px-3 py-2 text-sm text-right bg-green-50/30">
+                          {item.costPrice > 0 ? (
+                            <span className={itemProfit >= 0 ? 'text-green-700' : 'text-red-600'}>
+                              {formatCurrency(itemProfit)}
+                              <span className="ml-1 text-xs opacity-70">({profitRate.toFixed(1)}%)</span>
+                            </span>
+                          ) : (
+                            <span className="text-gray-300">—</span>
+                          )}
+                        </td>
+                        <td className="px-3 py-2 text-xs text-gray-500 max-w-[150px] truncate">{item.notes || ''}</td>
+                      </tr>
+                      {/* Cost parts detail row */}
+                      {hasCostParts && isExpanded && (
+                        <tr className="bg-orange-50/40">
+                          <td />
+                          <td colSpan={5} className="px-3 py-1.5">
+                            <div className="flex flex-wrap gap-3 text-xs text-orange-700">
+                              {item.costParts.map((part, pi) => (
+                                <span key={pi} className="bg-orange-100/60 px-2 py-0.5 rounded">
+                                  {part.name}: {formatCurrency(part.unitPrice)}
+                                </span>
+                              ))}
+                            </div>
+                          </td>
+                          <td colSpan={3} />
+                        </tr>
                       )}
-                    </td>
-                    <td className="px-4 py-2 text-sm text-gray-900 text-right">{item.quantity}</td>
-                    <td className="px-4 py-2 text-sm text-gray-500">{item.unit}</td>
-                    <td className="px-4 py-2 text-sm text-gray-900 text-right">{formatCurrency(item.unitPrice)}</td>
-                    <td className="px-4 py-2 text-sm text-gray-900 text-right font-medium">{formatCurrency(item.amount)}</td>
-                    <td className="px-4 py-2 text-xs text-gray-500 max-w-[200px] truncate">{item.notes || ''}</td>
-                  </tr>
-                ))}
+                    </React.Fragment>
+                  );
+                })}
               </tbody>
             </table>
           </div>
 
           {/* Totals */}
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-6">
+            {/* Cost & Profit summary */}
+            {totalCost > 0 && (
+              <div className="w-56 space-y-1 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-orange-600">原価合計</span>
+                  <span className="text-orange-700 font-medium">{formatCurrency(totalCost)}</span>
+                </div>
+                <div className="flex justify-between border-t border-green-200 pt-1 font-semibold">
+                  <span className="text-green-700">粗利</span>
+                  <span className="text-green-700">
+                    {formatCurrency(totalProfit)}
+                    <span className="ml-1 text-xs font-normal opacity-70">({totalProfitRate.toFixed(1)}%)</span>
+                  </span>
+                </div>
+              </div>
+            )}
+            {/* Sales totals */}
             <div className="w-64 space-y-1 text-sm">
               <div className="flex justify-between">
                 <span className="text-gray-500">小計</span>
